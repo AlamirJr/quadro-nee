@@ -296,6 +296,29 @@
   }
   .del-btn:hover { color: var(--accent3); }
 
+  .edit-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: .85rem;
+    padding: .2rem .4rem;
+    border-radius: 4px;
+    transition: color .15s;
+  }
+  .edit-btn:hover { color: var(--accent2); }
+
+  select:disabled, input:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+  }
+
+  /* Destaque do formulário quando em modo edição */
+  .editing-mode {
+    outline: 2px solid var(--accent2);
+    outline-offset: 4px;
+  }
+
   .empty-state {
     padding: 2.5rem 1rem;
     text-align: center;
@@ -531,7 +554,7 @@
       </div>
       <div class="field">
         <label>Situação / Investigação <span class="req">*</span></label>
-        <select id="investigacao" required>
+        <select id="investigacao" required onchange="onSituacaoChange()">
           <option value="">— selecione —</option>
           <option>Com laudo</option>
           <option>Estudo</option>
@@ -558,7 +581,10 @@
         <label>Cuidador</label>
         <select id="cuidador">
           <option value="">— selecione —</option>
-          <option>Sim</option><option>Não</option>
+          <option>Maria Clara Nunes</option><option>Tereza Lima</option>
+          <option>Rosângela Ferreira</option><option>Carlos Henrique Souza</option>
+          <option>Patrícia Oliveira</option><option>Juliana Alves</option>
+          <option>Fernanda Costa</option><option>André Martins</option>
         </select>
       </div>
       <div class="field">
@@ -592,7 +618,7 @@
   <!-- Actions -->
   <div class="actions">
     <button type="button" class="btn-secondary" onclick="clearForm()">↺ Limpar</button>
-    <button type="submit" class="btn-primary">✚ Adicionar Registro</button>
+    <button type="submit" id="submitBtn" class="btn-primary">✚ Adicionar Registro</button>
   </div>
 
 </form>
@@ -656,6 +682,7 @@
 
   // ── State ──────────────────────────────────────────
   let records = [];
+  let editIndex = null; // índice do registro em edição
 
   const COLS = [
     { key: 'num',               label: 'Nº' },
@@ -753,11 +780,20 @@
       }
     });
 
-    records.push(row);
+    if (editIndex !== null) {
+      records[editIndex] = row;
+      editIndex = null;
+      document.getElementById('submitBtn').textContent = '✚ Adicionar Registro';
+      document.getElementById('neeForm').classList.remove('editing-mode');
+      showToast('✏ Registro atualizado com sucesso!');
+    } else {
+      records.push(row);
+      showToast('✓ Registro salvo com sucesso!');
+    }
+
     renderTable();
     clearForm();
     await saveToServer();
-    showToast('✓ Registro salvo com sucesso!');
   });
 
   // ── Render table ───────────────────────────────────
@@ -785,7 +821,7 @@
       const col = COLS.find(c => c.key === k);
       html += `<th style="width:${colWidths[k]}">${col ? col.label : k}</th>`;
     });
-    html += '<th style="width:70px">Ações</th></tr></thead><tbody>';
+    html += '<th style="width:90px">Ações</th></tr></thead><tbody>';
 
     records.forEach((r, i) => {
       html += '<tr>';
@@ -801,10 +837,11 @@
         }
         html += `<td${tdClass} style="overflow:hidden;max-width:0">${val}</td>`;
       });
-      const delCell = currentRole === 'admin'
-        ? `<td><button class="del-btn" title="Excluir registro" onclick="removeRecord(${i})">✕</button></td>`
-        : `<td></td>`;
-      html += delCell;
+      const editBtn = `<button class="edit-btn" title="Editar registro" onclick="editRecord(${i})">✏</button>`;
+      const delBtn  = currentRole === 'admin'
+        ? `<button class="del-btn" title="Excluir registro" onclick="removeRecord(${i})">✕</button>`
+        : '';
+      html += `<td style="white-space:nowrap">${editBtn}${delBtn}</td>`;
       html += '</tr>';
     });
 
@@ -819,9 +856,55 @@
     showToast('🗑 Registro excluído.');
   }
 
+  function editRecord(i) {
+    const r = records[i];
+    editIndex = i;
+
+    // Preenche todos os campos do formulário
+    COLS.forEach(c => {
+      if (c.key === 'necessita') {
+        // Desmarca todos e marca os corretos
+        document.querySelectorAll('#necessita_group input[type="checkbox"]').forEach(cb => {
+          cb.checked = (r.necessita || '').split('; ').includes(cb.value);
+        });
+      } else {
+        const el = document.getElementById(c.key);
+        if (el) el.value = r[c.key] || '';
+      }
+    });
+
+    // Atualiza bloqueio de mediador/cuidador conforme situação
+    onSituacaoChange();
+
+    // Atualiza botão e destaque visual
+    document.getElementById('submitBtn').textContent = '💾 Salvar Alterações';
+    document.getElementById('neeForm').classList.add('editing-mode');
+
+    // Rola até o formulário
+    document.getElementById('neeForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Situação → bloqueia mediador/cuidador se "Estudo" ──
+  function onSituacaoChange() {
+    const isEstudo = document.getElementById('investigacao').value === 'Estudo';
+    const blocked = ['mediador', 'cuidador'];
+    blocked.forEach(id => {
+      const el = document.getElementById(id);
+      if (isEstudo) {
+        el.value = '';
+        el.disabled = true;
+      } else {
+        el.disabled = false;
+      }
+    });
+  }
+
   // ── Clear form ─────────────────────────────────────
   function clearForm() {
     document.getElementById('neeForm').reset();
+    editIndex = null;
+    document.getElementById('submitBtn').textContent = '✚ Adicionar Registro';
+    document.getElementById('neeForm').classList.remove('editing-mode');
   }
 
   // ── Toast ──────────────────────────────────────────
@@ -987,7 +1070,8 @@
       { sqref: 'I2:I500', formula: 'Listas!$E$2:$E$20' },   // ano_laudo
       { sqref: 'J2:J500', formula: 'Listas!$F$2:$F$30' },   // tipo_deficiencia
       { sqref: 'K2:K500', formula: 'Listas!$G$2:$G$10' },   // caso_severo
-      { sqref: 'L2:M500', formula: 'Listas!$H$2:$H$20' },   // mediador / cuidador
+      { sqref: 'L2:L500', formula: 'Listas!$H$2:$H$20' },   // mediador
+      { sqref: 'M2:M500', formula: 'Listas!$H$2:$H$20' },   // cuidador
       { sqref: 'N2:O500', formula: 'Listas!$I$2:$I$10' },   // sala_recursos / acomp_inst
       { sqref: 'P2:P500', formula: 'Listas!$J$2:$J$20' },   // necessita
       { sqref: 'Q2:Q500', formula: 'Listas!$K$2:$K$10' },   // situacao
@@ -1074,4 +1158,3 @@
 </script>
 </body>
 </html>
-
