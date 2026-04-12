@@ -1,1 +1,1570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Protocolo de Atendimento - Educação Inclusiva</title>
+
+  <style>
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 12px 30px rgba(17,24,39,.08);
+      --shadow-sm: 0 6px 18px rgba(17,24,39,.08);
+      --radius: 14px;
+
+      --primary: #2563eb;
+      --primary-2: #1d4ed8;
+
+      --danger: #ef4444;
+      --danger-2: #dc2626;
+
+      --success: #16a34a;
+      --success-bg: #dcfce7;
+
+      --warn: #f59e0b;
+      --warn-bg: #fffbeb;
+
+      --pending-bg: #fee2e2;
+      --pending: #991b1b;
+
+      --attended-bg: #dcfce7;
+      --attended: #166534;
+
+      --andamento-bg: #dbeafe;
+      --andamento: #1e40af;
+
+      --concluido-bg: #dcfce7;
+      --concluido: #166534;
+
+      --cancelado-bg: #f3f4f6;
+      --cancelado: #374151;
+
+      --focus: 0 0 0 4px rgba(37, 99, 235, .18);
+    }
+
+    * { box-sizing: border-box; }
+
+    body{
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+      background: radial-gradient(900px 500px at 20% -10%, rgba(37,99,235,.12), transparent 55%),
+                  radial-gradient(900px 500px at 100% 0%, rgba(16,185,129,.10), transparent 50%),
+                  var(--bg);
+      color: var(--text);
+    }
+
+    #lock{
+      position: fixed; inset: 0; z-index: 9999;
+      display: grid; place-items: center; padding: 18px;
+      background: radial-gradient(900px 500px at 20% -10%, rgba(37,99,235,.18), transparent 55%),
+                  radial-gradient(900px 500px at 100% 0%, rgba(16,185,129,.14), transparent 50%),
+                  #0b1220;
+    }
+
+    .lock-card{
+      width: min(520px, 100%);
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(255,255,255,.55);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      padding: 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .lock-title{ margin: 0 0 6px; font-size: 18px; color: #111827; letter-spacing: .2px; }
+    .lock-subtitle{ margin: 0 0 14px; color: #374151; font-size: 13px; line-height: 1.45; }
+
+    .lock-row{ display:flex; gap: 10px; align-items:center; flex-wrap: wrap; }
+
+    .lock-input{
+      flex: 1 1 220px; padding: 10px 12px; border-radius: 12px;
+      border: 1px solid var(--border); background: #fff; font-size: 14px; outline: none;
+    }
+    .lock-input:focus{ border-color: rgba(37,99,235,.55); box-shadow: var(--focus); }
+
+    .lock-btn{
+      appearance:none; border: 1px solid transparent;
+      background: linear-gradient(180deg, var(--primary), var(--primary-2));
+      color: #fff; padding: 10px 14px; border-radius: 12px; cursor: pointer;
+      font-weight: 800; font-size: 13px;
+      box-shadow: 0 10px 22px rgba(37,99,235,.25); white-space: nowrap;
+    }
+    .lock-btn:hover{ filter: brightness(1.05); }
+    .lock-hint{ margin: 10px 0 0; color: rgba(17,24,39,.70); font-size: 12px; }
+
+    #app{ display:none; }
+
+    .app{ max-width: 1300px; margin: 22px auto; padding: 0 16px 28px; }
+
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      flex-wrap: nowrap; gap: 8px; padding: 10px 14px;
+      background: rgba(255,255,255,.75); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(10px); position: sticky; top: 10px; z-index: 5;
+    }
+
+    .brand{ display:flex; gap: 10px; align-items:center; min-width: 0; flex-shrink: 0; }
+    .logo{
+      width: 38px; height: 38px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), #22c55e);
+      box-shadow: 0 10px 20px rgba(37,99,235,.22); position: relative; flex: 0 0 auto;
+    }
+    .logo::after{
+      content:""; position:absolute; inset: 9px; border-radius: 10px;
+      background: rgba(255,255,255,.65);
+    }
+    .brand h1{ margin:0; font-size: 14px; line-height: 1.2; letter-spacing: .2px; white-space: nowrap; }
+    .brand p{ margin:2px 0 0; font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+    .top-actions{
+      display:flex; flex-wrap: nowrap; gap: 6px;
+      justify-content: flex-end; align-items:center; flex-shrink: 1;
+    }
+
+    .btn{
+      appearance:none; border:1px solid var(--border); background: var(--card);
+      color: var(--text); padding: 7px 10px; border-radius: 10px; cursor:pointer;
+      font-weight: 600; font-size: 12px; display:inline-flex; align-items:center;
+      gap: 6px; white-space: nowrap;
+      transition: transform .04s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+      box-shadow: 0 8px 18px rgba(17,24,39,.06); user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 12px 24px rgba(17,24,39,.10); border-color: #d1d5db; }
+    .btn:active{ transform: translateY(0); box-shadow: 0 8px 18px rgba(17,24,39,.06); }
+    .btn:focus{ outline:none; box-shadow: var(--focus), 0 12px 24px rgba(17,24,39,.12); }
+
+    .btn-primary{
+      border-color: rgba(37,99,235,.30);
+      background: linear-gradient(180deg, rgba(37,99,235,.12), rgba(37,99,235,.06));
+      color: #0b2a7a;
+    }
+    .btn-primary:hover{ border-color: rgba(37,99,235,.45); background: linear-gradient(180deg, rgba(37,99,235,.16), rgba(37,99,235,.08)); }
+
+    .btn-solid{
+      border-color: transparent;
+      background: linear-gradient(180deg, var(--primary), var(--primary-2));
+      color: white;
+    }
+    .btn-solid:hover{ background: linear-gradient(180deg, #3b82f6, var(--primary-2)); }
+
+    .btn-danger{
+      border-color: transparent;
+      background: linear-gradient(180deg, var(--danger), var(--danger-2));
+      color: #fff;
+    }
+    .btn-danger:hover{ background: linear-gradient(180deg, #f87171, var(--danger-2)); }
+
+    .btn:disabled{ opacity: .45; cursor: not-allowed; transform: none !important; }
+
+    .icon{ width: 15px; height: 15px; display:inline-block; flex: 0 0 auto; }
+
+    .spinner{
+      width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.35);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin .6s linear infinite; flex: 0 0 auto;
+    }
+    .spinner-dark{ border-color: rgba(37,99,235,.25); border-top-color: var(--primary); }
+    @keyframes spin{ to{ transform: rotate(360deg); } }
+
+    #toast{
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: #111827; color: #fff; padding: 10px 20px;
+      border-radius: 999px; font-size: 13px; font-weight: 600;
+      opacity: 0; pointer-events: none;
+      transition: opacity .25s ease, transform .25s ease;
+      z-index: 9998; white-space: nowrap;
+    }
+    #toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.toast-ok{ background: #166534; }
+    #toast.toast-err{ background: #991b1b; }
+
+    .grid{
+      display:grid; grid-template-columns: 1.1fr .9fr;
+      gap: 16px; margin-top: 16px;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      .brand{ min-width: unset; }
+      .topbar{ flex-wrap: wrap; }
+      .top-actions{ flex-wrap: wrap; }
+    }
+
+    .card{
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+    }
+    .card-header{
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      display:flex; justify-content: space-between; align-items:center;
+      gap: 10px; background: linear-gradient(180deg, rgba(17,24,39,.02), transparent);
+    }
+    .card-header h2{ margin:0; font-size: 14px; letter-spacing:.2px; }
+    .card-header .hint{ margin:0; font-size: 12px; color: var(--muted); }
+    .card-body{ padding: 16px; }
+
+    form{ margin:0; }
+
+    .form-grid{ display:grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+
+    .field{ display:flex; flex-direction: column; gap: 6px; }
+    .field label{ font-size: 12px; color: #374151; font-weight: 700; }
+
+    input, textarea, select{
+      width: 100%; padding: 10px 12px; border-radius: 12px;
+      border: 1px solid var(--border); background: #ffffff;
+      color: var(--text); font-size: 14px;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    textarea{ resize: vertical; min-height: 92px; }
+    input:focus, textarea:focus, select:focus{
+      outline:none; border-color: rgba(37,99,235,.55); box-shadow: var(--focus);
+    }
+    .muted{ color: var(--muted); font-size: 12px; margin: 0; }
+
+    .col-12{ grid-column: span 12; }
+    .col-7{ grid-column: span 7; }
+    .col-8{ grid-column: span 8; }
+    .col-6{ grid-column: span 6; }
+    .col-4{ grid-column: span 4; }
+    .col-3{ grid-column: span 3; }
+    .col-1{ grid-column: span 1; }
+    .col-2{ grid-column: span 2; }
+
+    @media (max-width: 720px){
+      .col-8,.col-6,.col-4,.col-3,.col-2{ grid-column: span 12; }
+    }
+
+    .form-actions{ margin-top: 14px; display:flex; gap: 10px; flex-wrap: wrap; }
+    .form-actions .btn{ flex: 1 1 180px; justify-content:center; }
+
+    .table-wrap{
+      overflow:auto; border-radius: var(--radius); border: 1px solid var(--border);
+    }
+    table{
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      min-width: 700px; background: #fff;
+    }
+    /* Larguras fixas das colunas da tabela */
+    #tabela-atendimentos th:nth-child(1),
+    #tabela-atendimentos td:nth-child(1){ min-width: 80px; white-space: nowrap; }
+    #tabela-atendimentos th:nth-child(2),
+    #tabela-atendimentos td:nth-child(2){ min-width: 110px; }
+    #tabela-atendimentos th:nth-child(3),
+    #tabela-atendimentos td:nth-child(3){ min-width: 110px; }
+    #tabela-atendimentos th:last-child,
+    #tabela-atendimentos td:last-child{ min-width: 100px; white-space: nowrap; }
+
+    thead th{
+      position: sticky; top: 0; z-index: 2; background: #f9fafb;
+      color: #374151; font-size: 12px; text-transform: uppercase;
+      letter-spacing: .06em; border-bottom: 1px solid var(--border);
+      padding: 12px 10px; text-align: left; white-space: nowrap;
+    }
+    tbody td{
+      border-bottom: 1px solid var(--border); padding: 10px 10px;
+      vertical-align: top; font-size: 13px; color: #111827; word-break: break-word;
+    }
+    tbody tr:hover td{ background: rgba(37,99,235,.04); }
+
+    .badge{
+      display:inline-flex; align-items:center; gap: 8px;
+      padding: 6px 10px; border-radius: 999px; font-weight: 800;
+      font-size: 12px; border: 1px solid transparent; white-space: nowrap;
+    }
+    .badge::before{
+      content:""; width: 8px; height: 8px; border-radius: 999px;
+      background: currentColor; opacity: .75;
+    }
+    .badge-atendido{ background: var(--attended-bg); color: var(--attended); border-color: rgba(22, 101, 52, .20); }
+    .badge-pendente{ background: var(--pending-bg); color: var(--pending); border-color: rgba(153, 27, 27, .18); }
+
+    .acoes-wrap{ display:flex; gap:6px; flex-wrap: wrap; }
+
+    .acoes-btn{
+      width: auto; padding: 8px 10px; font-size: 12px; border-radius: 10px;
+      border: 1px solid var(--border); background: #fff; cursor:pointer; font-weight: 700;
+      transition: box-shadow .15s ease, transform .05s ease, background .15s ease;
+    }
+    .acoes-btn:hover{ box-shadow: 0 10px 18px rgba(17,24,39,.08); transform: translateY(-1px); }
+    .acoes-btn:active{ transform: translateY(0); }
+    .acoes-btn:focus{ outline:none; box-shadow: var(--focus), 0 10px 18px rgba(17,24,39,.10); }
+    .acoes-btn-remover{ color: var(--danger); border-color: rgba(239,68,68,.25); }
+    .acoes-btn-remover:hover{ background: #fef2f2; }
+
+    .badge-andamento{ background: var(--andamento-bg); color: var(--andamento); border-color: rgba(30,64,175,.20); }
+    .badge-concluido{ background: var(--concluido-bg); color: var(--concluido); border-color: rgba(22,101,52,.20); }
+    .badge-cancelado{ background: var(--cancelado-bg); color: var(--cancelado); border-color: rgba(55,65,81,.18); }
+
+    .subline{ display:flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+
+    .table-tools{
+      display:flex; gap: 10px; align-items:center;
+      justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px;
+    }
+    .search{ flex: 1 1 320px; display:flex; gap: 10px; align-items:center; }
+    .search input{ flex: 1 1 auto; }
+    .counter{ font-size: 12px; color: var(--muted); font-weight: 700; }
+
+    #modal-overlay{
+      position: fixed; inset: 0; z-index: 8000;
+      background: rgba(17,24,39,.45); backdrop-filter: blur(4px);
+      display: none; place-items: center; padding: 18px;
+    }
+    #modal-overlay.open{ display: grid; }
+
+    .modal-card{
+      width: min(580px, 100%); background: #fff; border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(17,24,39,.18); overflow: hidden;
+      animation: fadeUp .18s ease;
+    }
+    @keyframes fadeUp{ from{ opacity:0; transform: translateY(10px); } to{ opacity:1; transform: translateY(0); } }
+
+    .modal-header{
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(17,24,39,.02), transparent);
+    }
+    .modal-header h3{ margin:0; font-size: 14px; }
+    .modal-header .modal-id{ font-size: 12px; color: var(--muted); font-weight: 600; }
+    .modal-close{
+      width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 8px;
+      background: #fff; cursor: pointer; font-size: 16px; display: grid;
+      place-items: center; color: var(--muted); transition: background .15s;
+    }
+    .modal-close:hover{ background: #f3f4f6; color: var(--text); }
+
+    .modal-body{
+      padding: 16px 18px; display: grid;
+      grid-template-columns: 1fr 1fr; gap: 12px 20px;
+    }
+
+    .modal-field label{
+      display: block; font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px;
+    }
+    .modal-field span{ font-size: 13px; color: var(--text); line-height: 1.45; }
+    .modal-field.full{ grid-column: span 2; }
+
+    .modal-footer{
+      padding: 12px 18px; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+
+    /* =========================
+       CARDS DE ESTATÍSTICA
+       ========================= */
+    .stats-grid{
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+    @media (max-width: 720px){
+      .stats-grid{ grid-template-columns: repeat(2, 1fr); }
+    }
+    .stat-card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-card .stat-label{
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+    }
+    .stat-card .stat-valor{
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .stat-card.stat-total    { border-left: 4px solid #6b7280; }
+    .stat-card.stat-pendente { border-left: 4px solid var(--pending);   background: var(--pending-bg); }
+    .stat-card.stat-andamento{ border-left: 4px solid var(--andamento); background: var(--andamento-bg); }
+    .stat-card.stat-concluido{ border-left: 4px solid var(--concluido); background: var(--concluido-bg); }
+    .stat-card.stat-cancelado{ border-left: 4px solid var(--cancelado); background: var(--cancelado-bg); }
+    .stat-card.stat-total     .stat-valor{ color: #374151; }
+    .stat-card.stat-pendente  .stat-valor{ color: var(--pending); }
+    .stat-card.stat-andamento .stat-valor{ color: var(--andamento); }
+    .stat-card.stat-concluido .stat-valor{ color: var(--concluido); }
+    .stat-card.stat-cancelado .stat-valor{ color: var(--cancelado); }
+  </style>
+</head>
+
+<body>
+
+  <!-- BLOQUEIO -->
+  <div id="lock" role="dialog" aria-modal="true" aria-labelledby="lock-title">
+    <div class="lock-card">
+      <h2 class="lock-title" id="lock-title">Acesso restrito</h2>
+      <p class="lock-subtitle">Digite a senha para acessar o Protocolo de Atendimento.</p>
+      <form id="lock-form" autocomplete="off">
+        <div class="lock-row" style="margin-bottom:10px;">
+          <input class="lock-input" id="lock-nome" type="text" placeholder="Seu nome" aria-label="Nome" autocomplete="off" />
+        </div>
+        <div class="lock-row">
+          <input class="lock-input" id="lock-pass" type="password" placeholder="Senha" aria-label="Senha" />
+          <button class="lock-btn" type="submit">Entrar</button>
+        </div>
+        <p class="lock-hint">Proteção por senha local. Os dados ficam salvos no servidor e são visíveis a todos com acesso.</p>
+      </form>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div class="app" id="app">
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Protocolo de Atendimento</h1>
+          <p>Educação Inclusiva • Registro e Controle de Solicitações</p>
+          <div style="display:flex; align-items:center; gap:6px; margin:2px 0 0;">
+            <p id="usuario-label" style="margin:0; font-size:12px; color: var(--primary); font-weight:600;"></p>
+            <button id="btn-logout" style="
+              display:none; appearance:none;
+              border:1px solid rgba(37,99,235,.30);
+              background: linear-gradient(180deg, rgba(37,99,235,.10), rgba(37,99,235,.04));
+              color: #0b2a7a; padding: 2px 8px; border-radius: 8px; cursor:pointer;
+              font-size:11px; font-weight:700; line-height:1.6;
+            " title="Sair da sessão">Sair</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button class="btn btn-solid" id="btn-salvar-site" type="button">
+          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 21v-8H7v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 3v4h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Salvar no site
+        </button>
+        <button class="btn btn-primary" id="btn-atualizar" type="button" title="Buscar dados mais recentes do servidor">
+          <svg class="icon" viewBox="0 0 24 24" fill="none">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 21v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Atualizar
+        </button>
+        <button class="btn btn-primary" id="btn-exportar-excel" type="button">
+          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M12 3v10m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Exportar Excel
+        </button>
+        <button class="btn btn-primary" id="btn-importar-excel" type="button">
+          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M12 21V11m0 0 4 4m-4-4-4 4M5 7V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Importar Excel
+        </button>
+        <button class="btn btn-primary" id="btn-copiar-resumo" type="button">
+          <svg class="icon" viewBox="0 0 24 24" fill="none">
+            <path d="M8 7h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Copiar pendências
+        </button>
+        <button class="btn btn-danger" id="btn-limpar" type="button">
+          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2m-1 0v16a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6h10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Limpar
+        </button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- FORM -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>Novo atendimento</h2>
+            <p class="hint">Preencha os dados e registre. O status pode ser alterado na tabela.</p>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <form id="form-atendimento">
+            <div class="form-grid">
+
+              <div class="field col-6">
+                <label for="atendimento">Atendimento</label>
+                <input type="text" id="atendimento" placeholder="Ex.: Solicitação de mediador" required />
+              </div>
+
+              <div class="field col-6">
+                <label for="telefone">Telefone</label>
+                <input type="text" id="telefone" placeholder="(22) 9xxxx-xxxx" required inputmode="tel" />
+              </div>
+
+              <div class="field col-4">
+                <label for="vinculo">Vínculo com a escola</label>
+                <select id="vinculo" required>
+                  <option value="">Selecione</option>
+                  <option value="Diretor">Diretor</option>
+                  <option value="Diretor Adjunto">Diretor Adjunto</option>
+                  <option value="Mãe">Mãe</option>
+                  <option value="Outros">Outros</option>
+                </select>
+              </div>
+
+              <div class="field col-8">
+                <label for="aluno">Aluno</label>
+                <input type="text" id="aluno" placeholder="Nome do aluno" required />
+              </div>
+
+              <div class="field col-2">
+                <label for="idade">Idade</label>
+                <input type="number" id="idade" required min="0" placeholder="0" />
+              </div>
+
+              <div class="field col-2">
+                <label for="ae">AE</label>
+                <select id="ae" required>
+                  <option value="">—</option>
+                  <option value="G1">G1</option><option value="G2">G2</option><option value="G3">G3</option>
+                  <option value="Pré I">Pré I</option><option value="Pré II">Pré II</option>
+                  <option value="1º ano">1º ano</option><option value="2º ano">2º ano</option>
+                  <option value="3º ano">3º ano</option><option value="4º ano">4º ano</option>
+                  <option value="5º ano">5º ano</option><option value="6º ano">6º ano</option>
+                  <option value="7º ano">7º ano</option><option value="8º ano">8º ano</option>
+                  <option value="9º ano">9º ano</option>
+                </select>
+              </div>
+
+              <div class="field col-2">
+                <label for="turno">Turno</label>
+                <select id="turno" required>
+                  <option value="">—</option>
+                  <option value="M">M</option>
+                  <option value="T">T</option>
+                  <option value="I">I</option>
+                </select>
+              </div>
+
+              <div class="field col-6">
+                <label for="psp">PSP</label>
+                <select id="psp" required>
+                  <option value="">— selecione —</option>
+                  <option value="Ana Claudia Meireles">Ana Claudia Meireles</option>
+                  <option value="Bruno Tavares">Bruno Tavares</option>
+                  <option value="Carla Nascimento">Carla Nascimento</option>
+                  <option value="Diego Ferreira">Diego Ferreira</option>
+                  <option value="Elaine Souza">Elaine Souza</option>
+                  <option value="Fábio Andrade">Fábio Andrade</option>
+                  <option value="Gisele Rocha">Gisele Rocha</option>
+                  <option value="Henrique Lima">Henrique Lima</option>
+                  <option value="Isabela Gomes">Isabela Gomes</option>
+                  <option value="Jorge Mendes">Jorge Mendes</option>
+                  <option value="Kátia Vieira">Kátia Vieira</option>
+                  <option value="Lucas Barbosa">Lucas Barbosa</option>
+                  <option value="Mônica Cardoso">Mônica Cardoso</option>
+                  <option value="Nelson Teixeira">Nelson Teixeira</option>
+                  <option value="Odete Freitas">Odete Freitas</option>
+                  <option value="Paulo Ramos">Paulo Ramos</option>
+                  <option value="Queila Borges">Queila Borges</option>
+                  <option value="Roberto Azevedo">Roberto Azevedo</option>
+                </select>
+              </div>
+
+              <div class="field col-12">
+                <label for="escola">Escola</label>
+                <select id="escola" required>
+                  <option value="">— selecione —</option>
+                  <option value="CIEP 001 - Nova Esperança">CIEP 001 - Nova Esperança</option>
+                  <option value="CIEP 033 - Castro Alves">CIEP 033 - Castro Alves</option>
+                  <option value="CIEP 045 - Santos Dumont">CIEP 045 - Santos Dumont</option>
+                  <option value="CIEP 078 - Monteiro Lobato">CIEP 078 - Monteiro Lobato</option>
+                  <option value="CIEP 099 - Olavo Bilac">CIEP 099 - Olavo Bilac</option>
+                  <option value="CIEP 112 - Marechal Deodoro">CIEP 112 - Marechal Deodoro</option>
+                  <option value="EE Cel. Marcelino Pereira">EE Cel. Marcelino Pereira</option>
+                  <option value="EE Dr. Álvaro Henrique">EE Dr. Álvaro Henrique</option>
+                  <option value="EE Floriano Peixoto">EE Floriano Peixoto</option>
+                  <option value="EE Getúlio Vargas">EE Getúlio Vargas</option>
+                  <option value="EE Tiradentes">EE Tiradentes</option>
+                  <option value="EE Visconde de Mauá">EE Visconde de Mauá</option>
+                  <option value="EM Dom Pedro II">EM Dom Pedro II</option>
+                  <option value="EM José de Anchieta">EM José de Anchieta</option>
+                  <option value="EM Machado de Assis">EM Machado de Assis</option>
+                  <option value="EM Prefeito Raimundo Costa">EM Prefeito Raimundo Costa</option>
+                  <option value="EM Prof. João Batista">EM Prof. João Batista</option>
+                  <option value="EM Rui Barbosa">EM Rui Barbosa</option>
+                </select>
+              </div>
+
+              <div class="field col-12">
+                <label for="solicitacao">Descrição da solicitação</label>
+                <textarea id="solicitacao" required rows="3" placeholder="Descreva o pedido de forma objetiva..."></textarea>
+                <div class="subline">
+                  <p class="muted">Dica: informe contexto e urgência (se houver).</p>
+                  <p class="muted">Campos com * são obrigatórios (validação pelo navegador).</p>
+                </div>
+              </div>
+
+              <div class="field col-6">
+                <label for="tipo">Tipo de solicitação</label>
+                <select id="tipo" required>
+                  <option value="">Selecione</option>
+                  <option value="Pedido de Mediador">Pedido de Mediador</option>
+                  <option value="Pedido de Cuidador">Pedido de Cuidador</option>
+                  <option value="Outros">Outros</option>
+                </select>
+              </div>
+
+              <div class="field col-6">
+                <label for="status">Status do atendimento</label>
+                <select id="status" required>
+                  <option value="Pendente">Pendente</option>
+                  <option value="Em andamento">Em andamento</option>
+                  <option value="Concluído">Concluído</option>
+                  <option value="Cancelado">Cancelado</option>
+                </select>
+              </div>
+
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-solid" type="submit" style="flex: 1 1 240px; justify-content:center;">
+                <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Registrar atendimento
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- INFO CARD -->
+      <aside class="card">
+        <div class="card-header">
+          <div>
+            <h2>Operação</h2>
+            <p class="hint">Atalhos e boas práticas</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <ul style="margin:0; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.55;">
+            <li>Os dados são <b>salvos automaticamente</b> após cada ação. Use <b>Salvar no site</b> para forçar um salvamento manual.</li>
+            <li>Use <b>Atualizar</b> para buscar os dados mais recentes do servidor. A página também se atualiza automaticamente a cada 2 minutos.</li>
+            <li>Use <b>Exportar Excel</b> para baixar um arquivo .xlsx com todos os registros.</li>
+            <li>Use <b>Importar Excel</b> para carregar registros de um arquivo .xlsx salvo anteriormente.</li>
+            <li>Para consulta rápida, a tabela é ordenada por <b>PSP</b> (exibição).</li>
+            <li>A tabela mostra campos essenciais. Use <b>Ver</b> para detalhes completos.</li>
+            <li>Use <b>Copiar pendências</b> para gerar um resumo por PSP e colar no WhatsApp/e-mail.</li>
+            <li>Use o campo <b>Filtrar</b> acima da tabela para achar qualquer registro rápido.</li>
+            <li>Use <b>Remover</b> (linha vermelha na tabela) para excluir um atendimento específico.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+
+    <!-- CARDS DE ESTATÍSTICA -->
+    <div class="stats-grid">
+      <div class="stat-card stat-total">
+        <span class="stat-label">Total</span>
+        <span class="stat-valor" id="stat-total">0</span>
+      </div>
+      <div class="stat-card stat-pendente">
+        <span class="stat-label">Pendente</span>
+        <span class="stat-valor" id="stat-pendente">0</span>
+      </div>
+      <div class="stat-card stat-andamento">
+        <span class="stat-label">Em andamento</span>
+        <span class="stat-valor" id="stat-andamento">0</span>
+      </div>
+      <div class="stat-card stat-concluido">
+        <span class="stat-label">Concluído</span>
+        <span class="stat-valor" id="stat-concluido">0</span>
+      </div>
+      <div class="stat-card stat-cancelado">
+        <span class="stat-label">Cancelado</span>
+        <span class="stat-valor" id="stat-cancelado">0</span>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <section class="card" style="margin-top:16px;">
+      <div class="card-header">
+        <div>
+          <h2>Atendimentos registrados</h2>
+          <p class="hint">Colunas essenciais — use <b>Ver</b> para detalhes completos.</p>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="table-tools">
+          <div class="search">
+            <input id="filtro-tabela" type="text" placeholder="Filtrar por aluno, escola, AE, PSP, tipo, status..." />
+            <button class="btn btn-primary" id="btn-limpar-filtro" type="button">Limpar filtro</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div class="counter" id="contador-tabela">0 de 0</div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:12px; color:var(--muted); font-weight:600;">Por página:</span>
+              <select id="registros-por-pagina" style="padding:5px 8px; border-radius:8px; border:1px solid var(--border); font-size:12px; font-weight:600; color:var(--text); background:#fff; cursor:pointer;">
+                <option value="20">20</option>
+                <option value="30" selected>30</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+            <div style="display:flex; align-items:center; gap:4px;" id="paginacao-wrap">
+              <button class="btn btn-primary" id="btn-pag-anterior" type="button" style="padding:5px 10px; font-size:12px;">‹ Anterior</button>
+              <span id="pag-info" style="font-size:12px; color:var(--muted); font-weight:600; white-space:nowrap;">Pág. 1 / 1</span>
+              <button class="btn btn-primary" id="btn-pag-proximo" type="button" style="padding:5px 10px; font-size:12px;">Próximo ›</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table id="tabela-atendimentos">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Registrado por</th>
+                <th>Data/Hora</th>
+                <th>Aluno</th>
+                <th>AE</th>
+                <th>Escola</th>
+                <th>PSP Responsável</th>
+                <th>Tipo</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- MODAL DE DETALHES -->
+  <div id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3 id="modal-title">Detalhes do atendimento</h3>
+          <span class="modal-id" id="modal-id-label"></span>
+        </div>
+        <button class="modal-close" id="modal-fechar" aria-label="Fechar">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" id="modal-remover" style="margin-right:auto;">Remover</button>
+        <button class="btn btn-primary" id="modal-editar">Editar</button>
+        <button class="btn btn-solid" id="modal-salvar-edicao" style="display:none;">Salvar</button>
+        <button class="btn" id="modal-cancelar-edicao" style="display:none;">Cancelar</button>
+        <button class="btn btn-primary" id="modal-alterar-status">Alterar status</button>
+        <button class="btn" id="modal-fechar-btn">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- LOCK SCREEN -->
+  <script>
+    (function(){
+      const USUARIOS = [
+        { nome: "admin",  senha: "4321", admin: true  },
+        { nome: "Cíntia", senha: "123",  admin: false },
+        { nome: "Karla",  senha: "321",  admin: false },
+      ];
+
+      const lock      = document.getElementById("lock");
+      const app       = document.getElementById("app");
+      const form      = document.getElementById("lock-form");
+      const passInput = document.getElementById("lock-pass");
+      const nomeInput = document.getElementById("lock-nome");
+
+      function unlock(nome, isAdminFlag){
+        lock.style.display = "none";
+        app.style.display  = "block";
+
+        const label = document.getElementById("usuario-label");
+        if (label) label.textContent = "Usuário: " + nome + (isAdminFlag ? " (admin)" : "");
+        const btnLogout = document.getElementById("btn-logout");
+        if (btnLogout) btnLogout.style.display = "";
+
+        const btnLimpar = document.getElementById("btn-limpar");
+        if (btnLimpar) btnLimpar.style.display = isAdminFlag ? "" : "none";
+
+        try {
+          sessionStorage.setItem("protocolo_unlock",  "1");
+          sessionStorage.setItem("protocolo_usuario", nome);
+          sessionStorage.setItem("protocolo_role",    isAdminFlag ? "admin" : "user");
+        } catch(e){}
+      }
+
+      form.addEventListener("submit", function(ev){
+        ev.preventDefault();
+        const nomeDigitado  = (nomeInput.value || "").trim();
+        const senhaDigitada = (passInput.value || "").trim();
+
+        if (!nomeDigitado){ nomeInput.focus(); alert("Informe seu nome."); return; }
+
+        const usuario = USUARIOS.find(u =>
+          u.nome.toLowerCase() === nomeDigitado.toLowerCase() &&
+          u.senha === senhaDigitada
+        );
+
+        if (usuario){
+          unlock(usuario.nome, usuario.admin);
+        } else {
+          try {
+            sessionStorage.removeItem("protocolo_unlock");
+            sessionStorage.removeItem("protocolo_usuario");
+            sessionStorage.removeItem("protocolo_role");
+          } catch(e){}
+          passInput.value = "";
+          passInput.focus();
+          alert("Nome ou senha incorretos.");
+        }
+      });
+
+      try {
+        if (sessionStorage.getItem("protocolo_unlock") === "1"){
+          const nome        = sessionStorage.getItem("protocolo_usuario") || "Usuário";
+          const isAdminFlag = sessionStorage.getItem("protocolo_role") === "admin";
+          unlock(nome, isAdminFlag);
+        } else {
+          nomeInput.focus();
+        }
+      } catch(e){ nomeInput.focus(); }
+    })();
+  </script>
+
+  <script>
+    // ╔══════════════════════════════════════════════════════════════╗
+    // ║  LISTAS CENTRALIZADAS — edite apenas aqui                   ║
+    // ╚══════════════════════════════════════════════════════════════╝
+    const LISTA_AE = [
+      "G1","G2","G3","Pré I","Pré II",
+      "1º ano","2º ano","3º ano","4º ano","5º ano",
+      "6º ano","7º ano","8º ano","9º ano"
+    ];
+
+    const LISTA_TURNOS = ["M", "T", "I"];
+
+    const LISTA_PSPS = [
+      "Ana Claudia Meireles","Bruno Tavares","Carla Nascimento","Diego Ferreira",
+      "Elaine Souza","Fábio Andrade","Gisele Rocha","Henrique Lima",
+      "Isabela Gomes","Jorge Mendes","Kátia Vieira","Lucas Barbosa",
+      "Mônica Cardoso","Nelson Teixeira","Odete Freitas","Paulo Ramos",
+      "Queila Borges","Roberto Azevedo"
+    ];
+
+    const LISTA_ESCOLAS = [
+      "CIEP 001 - Nova Esperança","CIEP 033 - Castro Alves","CIEP 045 - Santos Dumont",
+      "CIEP 078 - Monteiro Lobato","CIEP 099 - Olavo Bilac","CIEP 112 - Marechal Deodoro",
+      "EE Cel. Marcelino Pereira","EE Dr. Álvaro Henrique","EE Floriano Peixoto",
+      "EE Getúlio Vargas","EE Tiradentes","EE Visconde de Mauá",
+      "EM Dom Pedro II","EM José de Anchieta","EM Machado de Assis",
+      "EM Prefeito Raimundo Costa","EM Prof. João Batista","EM Rui Barbosa"
+    ];
+
+    const JSONBIN_API_KEY = "$2a$10$UysIHXuZc3gSJiGlA..wruUCvTHTiHK7C9XVm5QHOAMGqV/ue2PFi";
+    const JSONBIN_BIN_ID  = "69ad51f2ae596e708f6c7426";
+    const JSONBIN_BASE    = "https://api.jsonbin.io/v3/b";
+  </script>
+
+  <script>
+    /* ---------- utilidades ---------- */
+    function usuarioAtual(){
+      try { return sessionStorage.getItem("protocolo_usuario") || "Desconhecido"; }
+      catch(e){ return "Desconhecido"; }
+    }
+
+    function isAdmin(){
+      try { return sessionStorage.getItem("protocolo_role") === "admin"; }
+      catch(e){ return false; }
+    }
+
+    function proximoId(){
+      let max = 0;
+      for (const a of atendimentosAll){
+        const match = (a.id || "").match(/^AT-(\d+)$/i);
+        if (match) max = Math.max(max, parseInt(match[1], 10));
+      }
+      return "AT-" + String(max + 1).padStart(4, "0");
+    }
+
+    let toastTimer = null;
+    function toast(msg, tipo = "ok", duracao = 3000){
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.className   = "show toast-" + tipo;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { el.className = ""; }, duracao);
+    }
+
+    /* ---------- auto-save ---------- */
+    let autoSaveTimer = null;
+    function autoSave(onConcluido = null){
+      clearTimeout(autoSaveTimer);
+      const btn = document.getElementById("btn-salvar-site");
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner"></span> Salvando…`;
+
+      autoSaveTimer = setTimeout(async () => {
+        const payload = atendimentosAll.length > 0 ? atendimentosAll : [{"__vazio": true}];
+        try {
+          const res = await fetch(`${JSONBIN_BASE}/${JSONBIN_BIN_ID}`, {
+            method:  "PUT",
+            headers: { "Content-Type": "application/json", "X-Master-Key": JSONBIN_API_KEY },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          btn.disabled = false;
+          btn.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Salvo ✓`;
+          setTimeout(() => { btn.innerHTML = BTN_SALVAR_HTML; }, 2000);
+        } catch(err){
+          btn.disabled = false;
+          btn.innerHTML = BTN_SALVAR_HTML;
+          toast("Auto-save falhou. Salve manualmente.", "err", 4000);
+          console.error("auto-save:", err);
+        } finally {
+          if (typeof onConcluido === "function") onConcluido();
+        }
+      }, 1500);
+    }
+
+    const BTN_SALVAR_HTML = `<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 21v-8H7v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 3v4h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Salvar no site`;
+
+    /* ---------- estado ---------- */
+    let atendimentosAll = [];
+
+    /* ---------- migração ---------- */
+    const ANOS_VALIDOS = new Set([
+      "g1","g2","g3","pré i","pré ii","pre i","pre ii",
+      "1º ano","2º ano","3º ano","4º ano","5º ano",
+      "6º ano","7º ano","8º ano","9º ano",
+      "1o ano","2o ano","3o ano","4o ano","5o ano",
+      "6o ano","7o ano","8o ano","9o ano",
+    ]);
+
+    const ANOS_LISTA = ["G1","G2","G3","Pré I","Pré II",
+      "1º ano","2º ano","3º ano","4º ano","5º ano",
+      "6º ano","7º ano","8º ano","9º ano"];
+
+    function migrarRegistro(r) {
+      let ae    = (r.ae    || "").trim();
+      let escola = (r.escola || "").trim();
+      if (ae && !ANOS_VALIDOS.has(ae.toLowerCase())) {
+        escola = escola || ae;
+        ae = "";
+      }
+      if (!ae) {
+        const seed = parseInt((r.id || "0").replace(/\D/g,""), 10) || 0;
+        ae = ANOS_LISTA[seed % ANOS_LISTA.length];
+      }
+      return { ...r, ae, escola };
+    }
+
+    /* ---------- carregar do servidor ---------- */
+    async function carregarDoServidor(silencioso = false){
+      const btnAtualizar = document.getElementById("btn-atualizar");
+      if (!silencioso){
+        if (btnAtualizar){ btnAtualizar.disabled = true; btnAtualizar.innerHTML = `<span class="spinner spinner-dark"></span> Atualizando…`; }
+        setBtnSalvarLoading(true);
+      }
+      try {
+        const res = await fetch(`${JSONBIN_BASE}/${JSONBIN_BIN_ID}/latest`, {
+          headers: { "X-Master-Key": JSONBIN_API_KEY }
+        });
+        if (res.status === 401) throw new Error("auth");
+        if (res.status === 404) throw new Error("notfound");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+
+        const json   = await res.json();
+        const record = json.record;
+        let lista = [];
+        if (Array.isArray(record)) lista = record;
+        else if (record && Array.isArray(record.atendimentos)) lista = record.atendimentos;
+
+        atendimentosAll = lista.filter(r => !r.__vazio).map(migrarRegistro);
+        listarAtendimentos();
+        if (!silencioso) toast(`${atendimentosAll.length} atendimento(s) carregado(s) ✓`, "ok");
+      } catch(err){
+        if (!silencioso){
+          atendimentosAll = [];
+          listarAtendimentos();
+          if (err.message === "auth")          toast("API Key inválida.", "err", 6000);
+          else if (err.message === "notfound") toast("Bin ID não encontrado.", "err", 6000);
+          else                                 toast("Não foi possível conectar ao servidor.", "err", 5000);
+        }
+        console.error(err);
+      } finally {
+        if (!silencioso){
+          setBtnSalvarLoading(false);
+          if (btnAtualizar){
+            btnAtualizar.disabled = false;
+            btnAtualizar.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 21v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Atualizar`;
+          }
+        }
+      }
+    }
+
+    /* ---------- salvar ---------- */
+    async function salvarNoServidor(){
+      setBtnSalvarLoading(true);
+      const payload = atendimentosAll.length > 0 ? atendimentosAll : [{"__vazio": true}];
+      try {
+        const res = await fetch(`${JSONBIN_BASE}/${JSONBIN_BIN_ID}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", "X-Master-Key": JSONBIN_API_KEY },
+          body: JSON.stringify(payload)
+        });
+        if (res.status === 401) throw new Error("auth");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        if (atendimentosAll.length > 0) toast("Dados salvos no site com sucesso ✓", "ok");
+        return true;
+      } catch(err){
+        if (err.message === "auth") toast("API Key inválida — dados não foram salvos.", "err", 6000);
+        else toast("Falha ao salvar. Verifique sua conexão.", "err", 5000);
+        console.error(err);
+        return false;
+      } finally {
+        setBtnSalvarLoading(false);
+      }
+    }
+
+    function setBtnSalvarLoading(on){
+      const btn = document.getElementById("btn-salvar-site");
+      if (on){ btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> Salvando…`; }
+      else   { btn.disabled = false; btn.innerHTML = BTN_SALVAR_HTML; }
+    }
+
+    /* ---------- paginação ---------- */
+    let paginaAtual = 1;
+    function registrosPorPagina(){
+      const sel = document.getElementById("registros-por-pagina");
+      return sel ? parseInt(sel.value) : 30;
+    }
+
+    /* ---------- tabela ---------- */
+    function listarAtendimentos(resetarPagina = false){
+      if (resetarPagina) paginaAtual = 1;
+
+      const tbody      = document.querySelector("#tabela-atendimentos tbody");
+      const filtroEl   = document.getElementById("filtro-tabela");
+      const contadorEl = document.getElementById("contador-tabela");
+      tbody.innerHTML  = "";
+
+      const filtro = (filtroEl?.value || "").trim().toLowerCase();
+      const sorted = atendimentosAll.slice().sort((a, b) => (a.psp || "").localeCompare(b.psp || ""));
+      const lista  = !filtro ? sorted : sorted.filter(a => {
+        const blob = [a.id, a.registradoPor, a.dataHora, a.atendimento, a.telefone,
+                      a.vinculo, a.aluno, a.idade, a.ae, a.escola, a.turno,
+                      a.psp, a.solicitacao, a.tipo, a.status].join(" ").toLowerCase();
+        return blob.includes(filtro);
+      });
+
+      const rpp       = registrosPorPagina();
+      const totalPags = Math.max(1, Math.ceil(lista.length / rpp));
+      if (paginaAtual > totalPags) paginaAtual = totalPags;
+      const inicio = (paginaAtual - 1) * rpp;
+      const pagina = lista.slice(inicio, inicio + rpp);
+
+      if (contadorEl) contadorEl.textContent = `${lista.length} de ${atendimentosAll.length}`;
+
+      // Atualizar cards de estatística (total geral, não só a página)
+      const contagens = { Pendente: 0, "Em andamento": 0, "Concluído": 0, Cancelado: 0 };
+      for (const a of atendimentosAll){
+        const s = a.status || "Pendente";
+        if (s in contagens) contagens[s]++;
+      }
+      const elTotal     = document.getElementById("stat-total");
+      const elPendente  = document.getElementById("stat-pendente");
+      const elAndamento = document.getElementById("stat-andamento");
+      const elConcluido = document.getElementById("stat-concluido");
+      const elCancelado = document.getElementById("stat-cancelado");
+      if (elTotal)     elTotal.textContent     = atendimentosAll.length;
+      if (elPendente)  elPendente.textContent  = contagens["Pendente"];
+      if (elAndamento) elAndamento.textContent = contagens["Em andamento"];
+      if (elConcluido) elConcluido.textContent = contagens["Concluído"];
+      if (elCancelado) elCancelado.textContent = contagens["Cancelado"];
+
+      const pagInfo = document.getElementById("pag-info");
+      if (pagInfo) pagInfo.textContent = `Pág. ${paginaAtual} / ${totalPags}`;
+
+      const btnAnterior = document.getElementById("btn-pag-anterior");
+      const btnProximo  = document.getElementById("btn-pag-proximo");
+      if (btnAnterior) btnAnterior.disabled = paginaAtual <= 1;
+      if (btnProximo)  btnProximo.disabled  = paginaAtual >= totalPags;
+
+      const wrapPag = document.getElementById("paginacao-wrap");
+      if (wrapPag) wrapPag.style.display = totalPags <= 1 ? "none" : "flex";
+
+      pagina.forEach(a => {
+        const row = document.createElement("tr");
+        [a.id, a.registradoPor || "—", a.dataHora, a.aluno, a.ae, a.escola || "—", a.psp, a.tipo].forEach(val => {
+          const td = document.createElement("td"); td.textContent = val ?? ""; row.appendChild(td);
+        });
+
+        const tdStatus = document.createElement("td");
+        const badge    = document.createElement("span");
+        badge.className   = "badge " + badgeClass(a.status);
+        badge.textContent = a.status || "Pendente";
+        tdStatus.appendChild(badge); row.appendChild(tdStatus);
+
+        const tdAcoes = document.createElement("td");
+        const wrap    = document.createElement("div"); wrap.className = "acoes-wrap";
+        const btnVer  = document.createElement("button");
+        btnVer.type = "button"; btnVer.className = "acoes-btn"; btnVer.textContent = "Ver detalhes"; btnVer.style.whiteSpace = "nowrap";
+        btnVer.addEventListener("click", () => abrirModal(a.id));
+        wrap.appendChild(btnVer); tdAcoes.appendChild(wrap); row.appendChild(tdAcoes);
+        tbody.appendChild(row);
+      });
+    }
+
+    const STATUS_CICLO = ["Pendente", "Em andamento", "Concluído", "Cancelado"];
+
+    function badgeClass(status){
+      if (status === "Atendido" || status === "Concluído") return "badge-concluido";
+      if (status === "Em andamento")                       return "badge-andamento";
+      if (status === "Cancelado")                          return "badge-cancelado";
+      return "badge-pendente";
+    }
+
+    function editarStatus(id){
+      const i = atendimentosAll.findIndex(x => x.id === id);
+      if (i === -1) return;
+      const atual = atendimentosAll[i].status || "Pendente";
+      const idx   = STATUS_CICLO.indexOf(atual);
+      atendimentosAll[i].status = STATUS_CICLO[(idx + 1) % STATUS_CICLO.length];
+      listarAtendimentos();
+      toast(`Status → ${atendimentosAll[i].status}.`, "ok");
+      autoSave();
+    }
+
+    function removerAtendimento(id){
+      if (!confirm("Remover este atendimento?")) return;
+      atendimentosAll = atendimentosAll.filter(x => x.id !== id);
+      listarAtendimentos();
+      toast("Atendimento removido.", "ok");
+      autoSave();
+    }
+
+    /* ---------- registrar novo ---------- */
+    document.getElementById("form-atendimento").addEventListener("submit", function(e){
+      e.preventDefault();
+      const usuario = (() => { try { return sessionStorage.getItem("protocolo_usuario") || ""; } catch(e){ return ""; } })();
+      const novo = {
+        id:            proximoId(),
+        registradoPor: usuario,
+        dataHora:      new Date().toLocaleString(),
+        atendimento:   document.getElementById("atendimento").value.trim(),
+        telefone:      document.getElementById("telefone").value.trim(),
+        vinculo:       document.getElementById("vinculo").value,
+        aluno:         document.getElementById("aluno").value.trim(),
+        idade:         document.getElementById("idade").value,
+        ae:            document.getElementById("ae").value.trim(),
+        escola:        document.getElementById("escola").value.trim(),
+        turno:         document.getElementById("turno").value.trim(),
+        psp:           document.getElementById("psp").value.trim(),
+        solicitacao:   document.getElementById("solicitacao").value.trim(),
+        tipo:          document.getElementById("tipo").value,
+        status:        document.getElementById("status").value
+      };
+
+      atendimentosAll.push(novo);
+      listarAtendimentos();
+      e.target.reset();
+      toast("Atendimento registrado.", "ok");
+
+      const btnSubmit = e.target.querySelector("[type=submit]");
+      if (btnSubmit){
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = `<span class="spinner"></span> Salvando…`;
+      }
+      autoSave(() => {
+        if (btnSubmit){
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Registrar atendimento`;
+        }
+      });
+    });
+
+    document.getElementById("btn-salvar-site").addEventListener("click", salvarNoServidor);
+
+    /* ---------- Exportar Excel ---------- */
+    document.getElementById("btn-exportar-excel").addEventListener("click", () => {
+      if (atendimentosAll.length === 0){ toast("Não há atendimentos para exportar.", "err"); return; }
+      const rows = atendimentosAll.map(a => ({
+        "ID":              a.id,
+        "Registrado por":  a.registradoPor || "",
+        "Data/Hora":       a.dataHora,
+        "Atendimento":     a.atendimento,
+        "Telefone":        a.telefone,
+        "Vínculo":         a.vinculo,
+        "Aluno":           a.aluno,
+        "Idade":           a.idade,
+        "AE":              a.ae,
+        "Escola":          a.escola || "",
+        "Turno":           a.turno,
+        "PSP Responsável": a.psp,
+        "Solicitação":     a.solicitacao,
+        "Tipo":            a.tipo,
+        "Status":          a.status
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Atendimentos");
+      XLSX.writeFile(wb, "atendimentos.xlsx");
+      toast("Excel exportado ✓", "ok");
+    });
+
+    /* ---------- Importar Excel ---------- */
+    document.getElementById("btn-importar-excel").addEventListener("click", () => {
+      const input = document.createElement("input");
+      input.type   = "file";
+      input.accept = ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          const data = await file.arrayBuffer();
+          const wb   = XLSX.read(data, { type: "array" });
+          const ws   = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+          if (!Array.isArray(rows)) throw new Error("Formato inválido.");
+
+          const normalizados = rows.map(r => ({
+            id:            (r["ID"]            || r["id"]            || proximoId()).toString(),
+            registradoPor: (r["Registrado por"] || r["registradoPor"] || "").toString(),
+            dataHora:      (r["Data/Hora"]      || r["dataHora"]      || new Date().toLocaleString()).toString(),
+            atendimento:   (r["Atendimento"]    || r["atendimento"]   || "").toString(),
+            telefone:      (r["Telefone"]        || r["telefone"]      || "").toString(),
+            vinculo:       (r["Vínculo"]         || r["Vinculo"]       || r["vinculo"] || "").toString(),
+            aluno:         (r["Aluno"]           || r["aluno"]         || "").toString(),
+            idade:         (r["Idade"]           || r["idade"]         || "").toString(),
+            ae:            (r["AE"]              || r["ae"]            || "").toString(),
+            escola:        (r["Escola"]          || r["escola"]        || "").toString(),
+            turno:         (r["Turno"]           || r["turno"]         || "").toString(),
+            psp:           (r["PSP Responsável"] || r["PSP Responsavel"] || r["psp"] || "").toString(),
+            solicitacao:   (r["Solicitação"]     || r["Solicitacao"]   || r["solicitacao"] || "").toString(),
+            tipo:          (r["Tipo"]            || r["tipo"]          || "").toString(),
+            status:        ((r["Status"]         || r["status"]        || "Pendente").toString() === "Atendido")
+                              ? "Atendido" : "Pendente"
+          }));
+
+          atendimentosAll = normalizados.map(migrarRegistro);
+          listarAtendimentos();
+          toast(`${normalizados.length} atendimentos importados.`, "ok", 3000);
+          autoSave();
+        } catch(err){
+          toast("Arquivo inválido ou corrompido.", "err");
+        }
+      };
+      input.click();
+    });
+
+    /* ---------- Copiar pendências ---------- */
+    document.getElementById("btn-copiar-resumo").addEventListener("click", async () => {
+      const pendentes = atendimentosAll.filter(a => ["Pendente","Em andamento"].includes(a.status || "Pendente"));
+      if (pendentes.length === 0){ toast("Não há pendências.", "err"); return; }
+
+      const grupos = new Map();
+      for (const a of pendentes){
+        const psp = (a.psp || "Sem PSP").trim() || "Sem PSP";
+        if (!grupos.has(psp)) grupos.set(psp, []);
+        grupos.get(psp).push(a);
+      }
+
+      const pspsOrdenados = Array.from(grupos.keys()).sort((x, y) => x.localeCompare(y));
+      const linhas = [];
+      linhas.push(`📌 Resumo de pendências (total: ${pendentes.length})`);
+      linhas.push(`Gerado em: ${new Date().toLocaleString()}`);
+      linhas.push("");
+
+      for (const psp of pspsOrdenados){
+        const itens = grupos.get(psp);
+        linhas.push(`👤 ${psp}: ${itens.length} pendência(s)`);
+        itens.slice(0, 10).forEach((a, idx) => {
+          linhas.push(`  ${idx + 1}. ${a.aluno || "-"} • ${a.tipo || "-"} • AE: ${a.ae || "-"} • Escola: ${a.escola || "-"}`);
+        });
+        if (itens.length > 10) linhas.push(`  … +${itens.length - 10} item(ns)`);
+        linhas.push("");
+      }
+
+      const texto = linhas.join("\n");
+      try {
+        await navigator.clipboard.writeText(texto);
+        toast("Resumo copiado para a área de transferência ✓", "ok");
+      } catch(e){
+        prompt("Copie manualmente:", texto);
+      }
+    });
+
+    /* ---------- Limpar tudo ---------- */
+    document.getElementById("btn-limpar").addEventListener("click", async () => {
+      if (!confirm("Deseja apagar todos os atendimentos do servidor?\n\nEsta ação não pode ser desfeita.")) return;
+      atendimentosAll = [];
+      listarAtendimentos();
+      const salvo = await salvarNoServidor();
+      if (salvo) toast("Dados apagados do servidor com sucesso ✓", "ok");
+    });
+
+    /* ---------- Filtro ---------- */
+    document.getElementById("filtro-tabela").addEventListener("input", () => listarAtendimentos(true));
+    document.getElementById("btn-limpar-filtro").addEventListener("click", () => {
+      const el = document.getElementById("filtro-tabela");
+      el.value = ""; el.focus(); listarAtendimentos();
+    });
+
+    /* ---------- Modal ---------- */
+    let modalIdAtual = null;
+
+    // ── CAMPOS_EDITAVEIS — psp agora usa select-psp ──────────────────────────
+    const CAMPOS_EDITAVEIS = [
+      ["Registrado por", "registradoPor", "text",        false],
+      ["Data/Hora",      "dataHora",      "text",        false],
+      ["Atendimento",    "atendimento",   "text",        false],
+      ["Telefone",       "telefone",      "text",        false],
+      ["Vínculo",        "vinculo",       "text",        false],
+      ["Aluno",          "aluno",         "text",        false],
+      ["Idade",          "idade",         "number",      false],
+      ["AE",             "ae",            "select-ae",   false],
+      ["Escola",         "escola",        "select-escola", true],
+      ["Turno",          "turno",         "select-turno",false],
+      ["PSP Resp.",      "psp",           "select-psp",  false],
+      ["Tipo",           "tipo",          "select-tipo", false],
+      ["Status",         "status",        "select",      false],
+      ["Solicitação",    "solicitacao",   "textarea",    true ],
+    ];
+
+    function renderModalBody(a, modoEdicao){
+      const body = document.getElementById("modal-body");
+      body.innerHTML = "";
+
+      CAMPOS_EDITAVEIS.forEach(([label, key, tipo, full]) => {
+        const div = document.createElement("div");
+        div.className = "modal-field" + (full ? " full" : "");
+
+        if (!modoEdicao){
+          div.innerHTML = `<label>${label}</label><span>${a[key] ?? "—"}</span>`;
+        } else {
+          let input;
+          const css = "width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);font-size:13px;";
+
+          if (tipo === "textarea"){
+            input = document.createElement("textarea");
+            input.rows = 3;
+            input.style.cssText = css + "resize:vertical;font-family:inherit;";
+            input.value = a[key] ?? "";
+
+          } else if (tipo === "select"){
+            input = document.createElement("select");
+            input.style.cssText = css;
+            STATUS_CICLO.forEach(s => {
+              const opt = document.createElement("option");
+              opt.value = s; opt.textContent = s;
+              if (s === a[key]) opt.selected = true;
+              input.appendChild(opt);
+            });
+
+          } else if (tipo === "select-turno"){
+            input = document.createElement("select");
+            input.style.cssText = css;
+            ["", ...LISTA_TURNOS].forEach(s => {
+              const opt = document.createElement("option");
+              opt.value = s; opt.textContent = s || "—";
+              if (s === (a[key] ?? "")) opt.selected = true;
+              input.appendChild(opt);
+            });
+
+          } else if (tipo === "select-ae"){
+            input = document.createElement("select");
+            input.style.cssText = css;
+            ["", ...LISTA_AE].forEach(s => {
+              const opt = document.createElement("option");
+              opt.value = s; opt.textContent = s || "— selecione —";
+              if (s === (a[key] ?? "")) opt.selected = true;
+              input.appendChild(opt);
+            });
+
+          } else if (tipo === "select-escola"){
+            input = document.createElement("select");
+            input.style.cssText = css;
+            ["", ...LISTA_ESCOLAS].forEach(s => {
+              const opt = document.createElement("option");
+              opt.value = s; opt.textContent = s || "— selecione —";
+              if (s === (a[key] ?? "")) opt.selected = true;
+              input.appendChild(opt);
+            });
+
+          } else if (tipo === "select-psp"){
+            input = document.createElement("select");
+            input.style.cssText = css;
+            ["", ...LISTA_PSPS].forEach(s => {
+              const opt = document.createElement("option");
+              opt.value = s; opt.textContent = s || "— selecione —";
+              if (s === (a[key] ?? "")) opt.selected = true;
+              input.appendChild(opt);
+            });
+
+          } else if (tipo === "select-tipo"){
+           input = document.createElement("select");
+           input.style.cssText = css;
+           ["", "Pedido de Mediador", "Pedido de Cuidador", "Outros"].forEach(s => {
+           const opt = document.createElement("option");
+           opt.value = s; opt.textContent = s || "— selecione —";
+           if (s === (a[key] ?? "")) opt.selected = true;
+           input.appendChild(opt);
+          });
+
+          } else {
+            input = document.createElement("input");
+            input.type = tipo;
+            input.style.cssText = css;
+            input.value = a[key] ?? "";
+          }
+
+          input.dataset.key = key;
+          input.className = "modal-edit-input";
+          div.innerHTML = `<label>${label}</label>`;
+          div.appendChild(input);
+        }
+        body.appendChild(div);
+      });
+    }
+
+    function abrirModal(id){
+      const a = atendimentosAll.find(x => x.id === id);
+      if (!a) return;
+      modalIdAtual = id;
+      document.getElementById("modal-id-label").textContent = a.id;
+      renderModalBody(a, false);
+
+      const btnEditar         = document.getElementById("modal-editar");
+      const btnSalvarEdicao   = document.getElementById("modal-salvar-edicao");
+      const btnCancelarEdicao = document.getElementById("modal-cancelar-edicao");
+      const btnStatus         = document.getElementById("modal-alterar-status");
+      const btnRemover        = document.getElementById("modal-remover");
+
+      btnEditar.style.display  = isAdmin() ? "" : "none";
+      btnRemover.style.display = isAdmin() ? "" : "none";
+      btnSalvarEdicao.style.display   = "none";
+      btnCancelarEdicao.style.display = "none";
+      btnStatus.style.display = "";
+
+      document.getElementById("modal-overlay").classList.add("open");
+    }
+
+    function fecharModal(){
+      document.getElementById("modal-overlay").classList.remove("open");
+      modalIdAtual = null;
+    }
+
+    document.getElementById("modal-fechar").addEventListener("click", fecharModal);
+    document.getElementById("modal-fechar-btn").addEventListener("click", fecharModal);
+    document.getElementById("modal-overlay").addEventListener("click", e => {
+      if (e.target === document.getElementById("modal-overlay")) fecharModal();
+    });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") fecharModal(); });
+
+    document.getElementById("modal-alterar-status").addEventListener("click", () => {
+      if (modalIdAtual) { editarStatus(modalIdAtual); fecharModal(); }
+    });
+    document.getElementById("modal-remover").addEventListener("click", () => {
+      if (modalIdAtual) { removerAtendimento(modalIdAtual); fecharModal(); }
+    });
+    document.getElementById("modal-editar").addEventListener("click", () => {
+      const a = atendimentosAll.find(x => x.id === modalIdAtual);
+      if (!a) return;
+      renderModalBody(a, true);
+      document.getElementById("modal-editar").style.display         = "none";
+      document.getElementById("modal-alterar-status").style.display = "none";
+      document.getElementById("modal-salvar-edicao").style.display  = "";
+      document.getElementById("modal-cancelar-edicao").style.display = "";
+    });
+    document.getElementById("modal-cancelar-edicao").addEventListener("click", () => {
+      abrirModal(modalIdAtual);
+    });
+    document.getElementById("modal-salvar-edicao").addEventListener("click", () => {
+      const i = atendimentosAll.findIndex(x => x.id === modalIdAtual);
+      if (i === -1) return;
+      document.querySelectorAll(".modal-edit-input").forEach(input => {
+        atendimentosAll[i][input.dataset.key] = input.value;
+      });
+      listarAtendimentos();
+      toast("Atendimento atualizado.", "ok");
+      autoSave();
+      abrirModal(modalIdAtual);
+    });
+
+    /* ---------- Logout ---------- */
+    document.getElementById("btn-logout").addEventListener("click", () => {
+      try {
+        sessionStorage.removeItem("protocolo_unlock");
+        sessionStorage.removeItem("protocolo_usuario");
+        sessionStorage.removeItem("protocolo_role");
+      } catch(e){}
+      document.getElementById("app").style.display  = "none";
+      document.getElementById("lock").style.display = "grid";
+      const nomeInput = document.getElementById("lock-nome");
+      const passInput = document.getElementById("lock-pass");
+      if (nomeInput){ nomeInput.value = ""; nomeInput.focus(); }
+      if (passInput)  passInput.value = "";
+      const label = document.getElementById("usuario-label");
+      if (label) label.textContent = "";
+      document.getElementById("btn-logout").style.display = "none";
+      const btnLimpar = document.getElementById("btn-limpar");
+      if (btnLimpar) btnLimpar.style.display = "none";
+    });
+
+    document.getElementById("btn-atualizar").addEventListener("click", () => { carregarDoServidor(false); });
+
+    /* ---------- auto-refresh seguro ---------- */
+    function podeAutoRefresh(){
+      if (document.getElementById("modal-overlay").classList.contains("open")) return false;
+      const campos = ["atendimento","telefone","aluno","ae","escola","turno","psp","solicitacao"];
+      if (campos.some(id => { const el = document.getElementById(id); return el && (el.value || "").trim() !== ""; })) return false;
+      if (autoSaveTimer !== null) return false;
+      return true;
+    }
+
+    /* ---------- paginação ---------- */
+    document.getElementById("btn-pag-anterior").addEventListener("click", () => {
+      if (paginaAtual > 1){ paginaAtual--; listarAtendimentos(); window.scrollTo({top: 0, behavior: "smooth"}); }
+    });
+    document.getElementById("btn-pag-proximo").addEventListener("click", () => {
+      paginaAtual++; listarAtendimentos(); window.scrollTo({top: 0, behavior: "smooth"});
+    });
+    document.getElementById("registros-por-pagina").addEventListener("change", () => listarAtendimentos(true));
+
+    /* ---------- Máscara de telefone ---------- */
+    document.getElementById("telefone").addEventListener("input", function (e) {
+      let v = e.target.value.replace(/\D/g, "").slice(0, 11);
+      if (v.length > 7)
+        v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+      else if (v.length > 2)
+        v = `(${v.slice(0,2)}) ${v.slice(2)}`;
+      else if (v.length > 0)
+        v = `(${v}`;
+      e.target.value = v;
+    });
+
+    /* ---------- init ---------- */
+    window.addEventListener("load", () => {
+      carregarDoServidor(false);
+      setInterval(() => { if (podeAutoRefresh()) carregarDoServidor(true); }, 2 * 60 * 1000);
+    });
+  </script>
+
+</body>
+</html>
+
 
