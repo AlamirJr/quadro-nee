@@ -1,1570 +1,1408 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Protocolo de Atendimento - Educação Inclusiva</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIEE — Sistema de Informação da Educação Especial</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/x-icon" href="siee_favicon.ico">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
-  <style>
-    :root{
-      --bg: #f6f7fb;
-      --card: #ffffff;
-      --text: #111827;
-      --muted: #6b7280;
-      --border: #e5e7eb;
-      --shadow: 0 12px 30px rgba(17,24,39,.08);
-      --shadow-sm: 0 6px 18px rgba(17,24,39,.08);
-      --radius: 14px;
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2330;
+    --border: #30363d;
+    --accent: #2ea043;
+    --accent2: #58a6ff;
+    --accent3: #f78166;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --radius: 10px;
+  }
 
-      --primary: #2563eb;
-      --primary-2: #1d4ed8;
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-      --danger: #ef4444;
-      --danger-2: #dc2626;
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
 
-      --success: #16a34a;
-      --success-bg: #dcfce7;
+  header {
+    max-width: 860px;
+    margin: 0 auto 2.5rem;
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+  }
 
-      --warn: #f59e0b;
-      --warn-bg: #fffbeb;
+  .logo {
+    width: 46px; height: 46px;
+    background: #ffffff;
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
 
-      --pending-bg: #fee2e2;
-      --pending: #991b1b;
+  h1 {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -.3px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
 
-      --attended-bg: #dcfce7;
-      --attended: #166534;
+  h1 span {
+    display: block;
+    font-size: .78rem;
+    font-weight: 400;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0;
+    margin-top: 3px;
+  }
 
-      --andamento-bg: #dbeafe;
-      --andamento: #1e40af;
+  .card {
+    max-width: 860px;
+    margin: 0 auto 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
 
-      --concluido-bg: #dcfce7;
-      --concluido: #166534;
+  .card-header {
+    background: var(--surface2);
+    padding: .75rem 1.25rem;
+    font-size: .72rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent2);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
 
-      --cancelado-bg: #f3f4f6;
-      --cancelado: #374151;
+  .card-header::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+    display: inline-block;
+  }
 
-      --focus: 0 0 0 4px rgba(37, 99, 235, .18);
-    }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    padding: 1.5rem;
+  }
 
-    * { box-sizing: border-box; }
+  .grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .grid.full { grid-template-columns: 1fr; }
 
-    body{
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
-      background: radial-gradient(900px 500px at 20% -10%, rgba(37,99,235,.12), transparent 55%),
-                  radial-gradient(900px 500px at 100% 0%, rgba(16,185,129,.10), transparent 50%),
-                  var(--bg);
-      color: var(--text);
-    }
+  .field { display: flex; flex-direction: column; gap: .45rem; }
+  .field.span2 { grid-column: span 2; }
 
-    #lock{
-      position: fixed; inset: 0; z-index: 9999;
-      display: grid; place-items: center; padding: 18px;
-      background: radial-gradient(900px 500px at 20% -10%, rgba(37,99,235,.18), transparent 55%),
-                  radial-gradient(900px 500px at 100% 0%, rgba(16,185,129,.14), transparent 50%),
-                  #0b1220;
-    }
+  label {
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+  }
 
-    .lock-card{
-      width: min(520px, 100%);
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(255,255,255,.55);
-      border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.25);
-      padding: 18px;
-      backdrop-filter: blur(10px);
-    }
+  label .req { color: var(--accent3); font-size: .9em; }
 
-    .lock-title{ margin: 0 0 6px; font-size: 18px; color: #111827; letter-spacing: .2px; }
-    .lock-subtitle{ margin: 0 0 14px; color: #374151; font-size: 13px; line-height: 1.45; }
+  input, select, textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius);
+    padding: .65rem .85rem;
+    font-family: 'Sora', sans-serif;
+    font-size: .9rem;
+    width: 100%;
+    transition: border-color .15s, box-shadow .15s;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
 
-    .lock-row{ display:flex; gap: 10px; align-items:center; flex-wrap: wrap; }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .75rem center;
+    padding-right: 2rem;
+    cursor: pointer;
+  }
 
-    .lock-input{
-      flex: 1 1 220px; padding: 10px 12px; border-radius: 12px;
-      border: 1px solid var(--border); background: #fff; font-size: 14px; outline: none;
-    }
-    .lock-input:focus{ border-color: rgba(37,99,235,.55); box-shadow: var(--focus); }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(88,166,255,.15);
+  }
 
-    .lock-btn{
-      appearance:none; border: 1px solid transparent;
-      background: linear-gradient(180deg, var(--primary), var(--primary-2));
-      color: #fff; padding: 10px 14px; border-radius: 12px; cursor: pointer;
-      font-weight: 800; font-size: 13px;
-      box-shadow: 0 10px 22px rgba(37,99,235,.25); white-space: nowrap;
-    }
-    .lock-btn:hover{ filter: brightness(1.05); }
-    .lock-hint{ margin: 10px 0 0; color: rgba(17,24,39,.70); font-size: 12px; }
+  input[type="date"] { color-scheme: dark; }
 
-    #app{ display:none; }
+  /* Checkbox group */
+  .check-group {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    padding: .65rem .85rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
 
-    .app{ max-width: 1300px; margin: 22px auto; padding: 0 16px 28px; }
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    cursor: pointer;
+    font-size: .88rem;
+  }
 
-    .topbar{
-      display:flex; align-items:center; justify-content:space-between;
-      flex-wrap: nowrap; gap: 8px; padding: 10px 14px;
-      background: rgba(255,255,255,.75); border: 1px solid var(--border);
-      border-radius: var(--radius); box-shadow: var(--shadow-sm);
-      backdrop-filter: blur(10px); position: sticky; top: 10px; z-index: 5;
-    }
+  .check-item input[type="checkbox"] {
+    width: 16px; height: 16px;
+    flex-shrink: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+    padding: 0;
+    border: none;
+    appearance: checkbox;
+    -webkit-appearance: checkbox;
+  }
 
-    .brand{ display:flex; gap: 10px; align-items:center; min-width: 0; flex-shrink: 0; }
-    .logo{
-      width: 38px; height: 38px; border-radius: 12px;
-      background: linear-gradient(135deg, var(--primary), #22c55e);
-      box-shadow: 0 10px 20px rgba(37,99,235,.22); position: relative; flex: 0 0 auto;
-    }
-    .logo::after{
-      content:""; position:absolute; inset: 9px; border-radius: 10px;
-      background: rgba(255,255,255,.65);
-    }
-    .brand h1{ margin:0; font-size: 14px; line-height: 1.2; letter-spacing: .2px; white-space: nowrap; }
-    .brand p{ margin:2px 0 0; font-size: 11px; color: var(--muted); white-space: nowrap; }
+  /* Actions */
+  .actions {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding: 0 0 .5rem;
+  }
 
-    .top-actions{
-      display:flex; flex-wrap: nowrap; gap: 6px;
-      justify-content: flex-end; align-items:center; flex-shrink: 1;
-    }
+  button {
+    font-family: 'Sora', sans-serif;
+    font-size: .88rem;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius);
+    padding: .7rem 1.5rem;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    display: flex; align-items: center; gap: .5rem;
+  }
 
-    .btn{
-      appearance:none; border:1px solid var(--border); background: var(--card);
-      color: var(--text); padding: 7px 10px; border-radius: 10px; cursor:pointer;
-      font-weight: 600; font-size: 12px; display:inline-flex; align-items:center;
-      gap: 6px; white-space: nowrap;
-      transition: transform .04s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
-      box-shadow: 0 8px 18px rgba(17,24,39,.06); user-select:none;
-    }
-    .btn:hover{ transform: translateY(-1px); box-shadow: 0 12px 24px rgba(17,24,39,.10); border-color: #d1d5db; }
-    .btn:active{ transform: translateY(0); box-shadow: 0 8px 18px rgba(17,24,39,.06); }
-    .btn:focus{ outline:none; box-shadow: var(--focus), 0 12px 24px rgba(17,24,39,.12); }
+  button:active { transform: scale(.97); }
 
-    .btn-primary{
-      border-color: rgba(37,99,235,.30);
-      background: linear-gradient(180deg, rgba(37,99,235,.12), rgba(37,99,235,.06));
-      color: #0b2a7a;
-    }
-    .btn-primary:hover{ border-color: rgba(37,99,235,.45); background: linear-gradient(180deg, rgba(37,99,235,.16), rgba(37,99,235,.08)); }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
 
-    .btn-solid{
-      border-color: transparent;
-      background: linear-gradient(180deg, var(--primary), var(--primary-2));
-      color: white;
-    }
-    .btn-solid:hover{ background: linear-gradient(180deg, #3b82f6, var(--primary-2)); }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
 
-    .btn-danger{
-      border-color: transparent;
-      background: linear-gradient(180deg, var(--danger), var(--danger-2));
-      color: #fff;
-    }
-    .btn-danger:hover{ background: linear-gradient(180deg, #f87171, var(--danger-2)); }
+  .btn-export {
+    background: transparent;
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+  }
 
-    .btn:disabled{ opacity: .45; cursor: not-allowed; transform: none !important; }
+  .btn-clear-all {
+    font-family: 'Sora', sans-serif;
+    font-size: .88rem;
+    font-weight: 600;
+    background: transparent;
+    border: 1px solid var(--accent3);
+    color: var(--accent3);
+    border-radius: var(--radius);
+    padding: .7rem 1.5rem;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s, background .15s;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .btn-clear-all:hover { background: rgba(247,129,102,.12); }
+  .btn-clear-all:active { transform: scale(.97); }
 
-    .icon{ width: 15px; height: 15px; display:inline-block; flex: 0 0 auto; }
+  .btn-import {
+    font-family: 'Sora', sans-serif;
+    font-size: .88rem;
+    font-weight: 600;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: var(--radius);
+    padding: .7rem 1.5rem;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .btn-import:hover { opacity: .85; }
+  .btn-import:active { transform: scale(.97); }
 
-    .spinner{
-      width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.35);
-      border-top-color: #fff; border-radius: 50%;
-      animation: spin .6s linear infinite; flex: 0 0 auto;
-    }
-    .spinner-dark{ border-color: rgba(37,99,235,.25); border-top-color: var(--primary); }
-    @keyframes spin{ to{ transform: rotate(360deg); } }
+  button:hover { opacity: .85; }
 
-    #toast{
-      position: fixed; bottom: 24px; left: 50%;
-      transform: translateX(-50%) translateY(12px);
-      background: #111827; color: #fff; padding: 10px 20px;
-      border-radius: 999px; font-size: 13px; font-weight: 600;
-      opacity: 0; pointer-events: none;
-      transition: opacity .25s ease, transform .25s ease;
-      z-index: 9998; white-space: nowrap;
-    }
-    #toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
-    #toast.toast-ok{ background: #166534; }
-    #toast.toast-err{ background: #991b1b; }
+  /* Table */
+  .table-wrap {
+    overflow-x: auto;
+    padding: 1rem 1.25rem 1.25rem;
+  }
 
-    .grid{
-      display:grid; grid-template-columns: 1.1fr .9fr;
-      gap: 16px; margin-top: 16px;
-    }
-    @media (max-width: 980px){
-      .grid{ grid-template-columns: 1fr; }
-      .brand{ min-width: unset; }
-      .topbar{ flex-wrap: wrap; }
-      .top-actions{ flex-wrap: wrap; }
-    }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .8rem;
+  }
 
-    .card{
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
-    }
-    .card-header{
-      padding: 14px 16px; border-bottom: 1px solid var(--border);
-      display:flex; justify-content: space-between; align-items:center;
-      gap: 10px; background: linear-gradient(180deg, rgba(17,24,39,.02), transparent);
-    }
-    .card-header h2{ margin:0; font-size: 14px; letter-spacing:.2px; }
-    .card-header .hint{ margin:0; font-size: 12px; color: var(--muted); }
-    .card-body{ padding: 16px; }
+  thead th {
+    text-align: left;
+    padding: .6rem .75rem;
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .68rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
 
-    form{ margin:0; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: .55rem .75rem; color: var(--text); vertical-align: middle; }
+  td.col-investigacao { max-width: 160px; }
+  td.col-investigacao .badge { display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; cursor: default; }
 
-    .form-grid{ display:grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+  .badge {
+    display: inline-block;
+    padding: .15rem .55rem;
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 600;
+  }
 
-    .field{ display:flex; flex-direction: column; gap: 6px; }
-    .field label{ font-size: 12px; color: #374151; font-weight: 700; }
+  .badge-yes { background: rgba(46,160,67,.2); color: var(--accent); }
+  .badge-no  { background: rgba(247,129,102,.15); color: var(--accent3); }
 
-    input, textarea, select{
-      width: 100%; padding: 10px 12px; border-radius: 12px;
-      border: 1px solid var(--border); background: #ffffff;
-      color: var(--text); font-size: 14px;
-      transition: box-shadow .15s ease, border-color .15s ease;
-    }
-    textarea{ resize: vertical; min-height: 92px; }
-    input:focus, textarea:focus, select:focus{
-      outline:none; border-color: rgba(37,99,235,.55); box-shadow: var(--focus);
-    }
-    .muted{ color: var(--muted); font-size: 12px; margin: 0; }
+  .del-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: .85rem;
+    padding: .2rem .4rem;
+    border-radius: 4px;
+    transition: color .15s;
+  }
+  .del-btn:hover { color: var(--accent3); }
 
-    .col-12{ grid-column: span 12; }
-    .col-7{ grid-column: span 7; }
-    .col-8{ grid-column: span 8; }
-    .col-6{ grid-column: span 6; }
-    .col-4{ grid-column: span 4; }
-    .col-3{ grid-column: span 3; }
-    .col-1{ grid-column: span 1; }
-    .col-2{ grid-column: span 2; }
+  .edit-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: .85rem;
+    padding: .2rem .4rem;
+    border-radius: 4px;
+    transition: color .15s;
+  }
+  .edit-btn:hover { color: var(--accent2); }
 
-    @media (max-width: 720px){
-      .col-8,.col-6,.col-4,.col-3,.col-2{ grid-column: span 12; }
-    }
+  select:disabled, input:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+  }
 
-    .form-actions{ margin-top: 14px; display:flex; gap: 10px; flex-wrap: wrap; }
-    .form-actions .btn{ flex: 1 1 180px; justify-content:center; }
+  /* Destaque do formulário quando em modo edição */
+  .editing-mode {
+    outline: 2px solid var(--accent2);
+    outline-offset: 4px;
+  }
 
-    .table-wrap{
-      overflow:auto; border-radius: var(--radius); border: 1px solid var(--border);
-    }
-    table{
-      width: 100%; border-collapse: separate; border-spacing: 0;
-      min-width: 700px; background: #fff;
-    }
-    /* Larguras fixas das colunas da tabela */
-    #tabela-atendimentos th:nth-child(1),
-    #tabela-atendimentos td:nth-child(1){ min-width: 80px; white-space: nowrap; }
-    #tabela-atendimentos th:nth-child(2),
-    #tabela-atendimentos td:nth-child(2){ min-width: 110px; }
-    #tabela-atendimentos th:nth-child(3),
-    #tabela-atendimentos td:nth-child(3){ min-width: 110px; }
-    #tabela-atendimentos th:last-child,
-    #tabela-atendimentos td:last-child{ min-width: 100px; white-space: nowrap; }
+  .empty-state {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: .85rem;
+  }
 
-    thead th{
-      position: sticky; top: 0; z-index: 2; background: #f9fafb;
-      color: #374151; font-size: 12px; text-transform: uppercase;
-      letter-spacing: .06em; border-bottom: 1px solid var(--border);
-      padding: 12px 10px; text-align: left; white-space: nowrap;
-    }
-    tbody td{
-      border-bottom: 1px solid var(--border); padding: 10px 10px;
-      vertical-align: top; font-size: 13px; color: #111827; word-break: break-word;
-    }
-    tbody tr:hover td{ background: rgba(37,99,235,.04); }
+  /* Paginação */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 1.25rem;
+    border-top: 1px solid var(--border);
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .pagination-info {
+    font-size: .75rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .pagination-controls { display: flex; align-items: center; gap: .4rem; }
+  .page-btn {
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem; font-weight: 600;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px; padding: .3rem .65rem;
+    cursor: pointer; transition: all .15s;
+  }
+  .page-btn:hover:not(:disabled) { border-color: var(--accent2); color: var(--accent2); }
+  .page-btn.active { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+  .page-btn:disabled { opacity: .3; cursor: not-allowed; }
+  .per-page-select {
+    font-family: 'JetBrains Mono', monospace; font-size: .75rem;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted); border-radius: 6px; padding: .3rem .5rem;
+    cursor: pointer; outline: none; appearance: none;
+  }
 
-    .badge{
-      display:inline-flex; align-items:center; gap: 8px;
-      padding: 6px 10px; border-radius: 999px; font-weight: 800;
-      font-size: 12px; border: 1px solid transparent; white-space: nowrap;
-    }
-    .badge::before{
-      content:""; width: 8px; height: 8px; border-radius: 999px;
-      background: currentColor; opacity: .75;
-    }
-    .badge-atendido{ background: var(--attended-bg); color: var(--attended); border-color: rgba(22, 101, 52, .20); }
-    .badge-pendente{ background: var(--pending-bg); color: var(--pending); border-color: rgba(153, 27, 27, .18); }
+  /* Search */
+  .search-wrap {
+    display: flex; align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .25rem .65rem;
+    gap: .4rem;
+    transition: border-color .15s, box-shadow .15s;
+    min-width: 260px;
+  }
+  .search-wrap:focus-within {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(88,166,255,.12);
+  }
+  .search-icon { color: var(--muted); font-size: 1.05rem; flex-shrink: 0; line-height: 1; }
+  .search-input {
+    background: none; border: none; outline: none; box-shadow: none;
+    color: var(--text); font-family: 'Sora', sans-serif;
+    font-size: .78rem; padding: .2rem 0; width: 100%;
+    appearance: none; -webkit-appearance: none;
+  }
+  .search-input::placeholder { color: var(--muted); font-size: .74rem; }
+  .search-clear {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: .75rem; padding: 0;
+    line-height: 1; flex-shrink: 0; transition: color .15s;
+  }
+  .search-clear:hover { color: var(--accent3); }
+  mark.hl { background: rgba(88,166,255,.28); color: var(--text); border-radius: 2px; padding: 0 1px; }
 
-    .acoes-wrap{ display:flex; gap:6px; flex-wrap: wrap; }
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 2rem; right: 2rem;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: .75rem 1.25rem;
+    border-radius: var(--radius);
+    font-size: .85rem;
+    transform: translateY(6rem);
+    opacity: 0;
+    transition: all .3s;
+    z-index: 100;
+    display: flex; align-items: center; gap: .5rem;
+    max-width: 320px;
+  }
 
-    .acoes-btn{
-      width: auto; padding: 8px 10px; font-size: 12px; border-radius: 10px;
-      border: 1px solid var(--border); background: #fff; cursor:pointer; font-weight: 700;
-      transition: box-shadow .15s ease, transform .05s ease, background .15s ease;
-    }
-    .acoes-btn:hover{ box-shadow: 0 10px 18px rgba(17,24,39,.08); transform: translateY(-1px); }
-    .acoes-btn:active{ transform: translateY(0); }
-    .acoes-btn:focus{ outline:none; box-shadow: var(--focus), 0 10px 18px rgba(17,24,39,.10); }
-    .acoes-btn-remover{ color: var(--danger); border-color: rgba(239,68,68,.25); }
-    .acoes-btn-remover:hover{ background: #fef2f2; }
+  #toast.show { transform: translateY(0); opacity: 1; }
 
-    .badge-andamento{ background: var(--andamento-bg); color: var(--andamento); border-color: rgba(30,64,175,.20); }
-    .badge-concluido{ background: var(--concluido-bg); color: var(--concluido); border-color: rgba(22,101,52,.20); }
-    .badge-cancelado{ background: var(--cancelado-bg); color: var(--cancelado); border-color: rgba(55,65,81,.18); }
+  /* Login overlay */
+  #loginOverlay {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999;
+  }
 
-    .subline{ display:flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    width: 100%; max-width: 360px;
+    display: flex; flex-direction: column; gap: 1.5rem;
+  }
 
-    .table-tools{
-      display:flex; gap: 10px; align-items:center;
-      justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px;
-    }
-    .search{ flex: 1 1 320px; display:flex; gap: 10px; align-items:center; }
-    .search input{ flex: 1 1 auto; }
-    .counter{ font-size: 12px; color: var(--muted); font-weight: 700; }
+  .login-box .logo-wrap {
+    display: flex; align-items: center; gap: .9rem;
+  }
 
-    #modal-overlay{
-      position: fixed; inset: 0; z-index: 8000;
-      background: rgba(17,24,39,.45); backdrop-filter: blur(4px);
-      display: none; place-items: center; padding: 18px;
-    }
-    #modal-overlay.open{ display: grid; }
+  .login-box h2 {
+    font-size: 1.1rem; font-weight: 700; letter-spacing: -.3px; line-height: 1.2;
+  }
 
-    .modal-card{
-      width: min(580px, 100%); background: #fff; border-radius: 16px;
-      box-shadow: 0 24px 60px rgba(17,24,39,.18); overflow: hidden;
-      animation: fadeUp .18s ease;
-    }
-    @keyframes fadeUp{ from{ opacity:0; transform: translateY(10px); } to{ opacity:1; transform: translateY(0); } }
+  .login-box h2 span {
+    display: block; font-size: .72rem; font-weight: 400;
+    color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-top: 3px;
+  }
 
-    .modal-header{
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 18px; border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(17,24,39,.02), transparent);
-    }
-    .modal-header h3{ margin:0; font-size: 14px; }
-    .modal-header .modal-id{ font-size: 12px; color: var(--muted); font-weight: 600; }
-    .modal-close{
-      width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 8px;
-      background: #fff; cursor: pointer; font-size: 16px; display: grid;
-      place-items: center; color: var(--muted); transition: background .15s;
-    }
-    .modal-close:hover{ background: #f3f4f6; color: var(--text); }
+  .login-error {
+    font-size: .78rem; color: var(--accent3);
+    background: rgba(247,129,102,.1);
+    border: 1px solid rgba(247,129,102,.25);
+    border-radius: 6px; padding: .5rem .75rem;
+    display: none;
+  }
 
-    .modal-body{
-      padding: 16px 18px; display: grid;
-      grid-template-columns: 1fr 1fr; gap: 12px 20px;
-    }
+  .login-error.show { display: block; }
 
-    .modal-field label{
-      display: block; font-size: 11px; font-weight: 700; color: var(--muted);
-      text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px;
-    }
-    .modal-field span{ font-size: 13px; color: var(--text); line-height: 1.45; }
-    .modal-field.full{ grid-column: span 2; }
+  /* User badge no header */
+  .user-badge {
+    margin-left: auto;
+    display: flex; align-items: center; gap: .75rem;
+    font-size: .78rem; color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
 
-    .modal-footer{
-      padding: 12px 18px; border-top: 1px solid var(--border);
-      display: flex; justify-content: flex-end; gap: 8px;
-    }
+  .user-badge strong { color: var(--accent2); }
 
-    /* =========================
-       CARDS DE ESTATÍSTICA
-       ========================= */
-    .stats-grid{
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
-      margin-top: 16px;
-    }
-    @media (max-width: 720px){
-      .stats-grid{ grid-template-columns: repeat(2, 1fr); }
-    }
-    .stat-card{
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 12px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      box-shadow: var(--shadow-sm);
-    }
-    .stat-card .stat-label{
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      color: var(--muted);
-    }
-    .stat-card .stat-valor{
-      font-size: 28px;
-      font-weight: 800;
-      line-height: 1;
-    }
-    .stat-card.stat-total    { border-left: 4px solid #6b7280; }
-    .stat-card.stat-pendente { border-left: 4px solid var(--pending);   background: var(--pending-bg); }
-    .stat-card.stat-andamento{ border-left: 4px solid var(--andamento); background: var(--andamento-bg); }
-    .stat-card.stat-concluido{ border-left: 4px solid var(--concluido); background: var(--concluido-bg); }
-    .stat-card.stat-cancelado{ border-left: 4px solid var(--cancelado); background: var(--cancelado-bg); }
-    .stat-card.stat-total     .stat-valor{ color: #374151; }
-    .stat-card.stat-pendente  .stat-valor{ color: var(--pending); }
-    .stat-card.stat-andamento .stat-valor{ color: var(--andamento); }
-    .stat-card.stat-concluido .stat-valor{ color: var(--concluido); }
-    .stat-card.stat-cancelado .stat-valor{ color: var(--cancelado); }
-  </style>
+  .btn-logout {
+    font-family: 'Sora', sans-serif;
+    font-size: .75rem; font-weight: 600;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px; padding: .3rem .8rem;
+    cursor: pointer; transition: color .15s, border-color .15s;
+  }
+  .btn-logout:hover { color: var(--accent3); border-color: var(--accent3); }
+
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
+    .grid.three { grid-template-columns: 1fr 1fr; }
+    .field.span2 { grid-column: span 1; }
+    .actions { flex-wrap: wrap; }
+  }
+</style>
 </head>
-
 <body>
 
-  <!-- BLOQUEIO -->
-  <div id="lock" role="dialog" aria-modal="true" aria-labelledby="lock-title">
-    <div class="lock-card">
-      <h2 class="lock-title" id="lock-title">Acesso restrito</h2>
-      <p class="lock-subtitle">Digite a senha para acessar o Protocolo de Atendimento.</p>
-      <form id="lock-form" autocomplete="off">
-        <div class="lock-row" style="margin-bottom:10px;">
-          <input class="lock-input" id="lock-nome" type="text" placeholder="Seu nome" aria-label="Nome" autocomplete="off" />
-        </div>
-        <div class="lock-row">
-          <input class="lock-input" id="lock-pass" type="password" placeholder="Senha" aria-label="Senha" />
-          <button class="lock-btn" type="submit">Entrar</button>
-        </div>
-        <p class="lock-hint">Proteção por senha local. Os dados ficam salvos no servidor e são visíveis a todos com acesso.</p>
-      </form>
+<!-- LOGIN OVERLAY -->
+<div id="loginOverlay">
+  <div class="login-box">
+    <div class="logo-wrap">
+      <div class="logo">📚</div>
+      <h2>SIEE<span>Acesso restrito</span></h2>
     </div>
+    <div class="field">
+      <label>Usuário</label>
+      <input type="text" id="loginUser" placeholder="Digite seu usuário" onkeydown="if(event.key==='Enter') document.getElementById('loginInput').focus()" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <div style="position:relative;">
+        <input type="password" id="loginInput" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter') doLogin()" style="padding-right:2.5rem" autocomplete="current-password">
+        <button type="button" id="togglePwd" onclick="togglePassword()" title="Mostrar/ocultar senha"
+          style="position:absolute;right:.65rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:0;line-height:1;transition:color .15s;"
+          onmouseover="this.style.color='var(--accent2)'" onmouseout="this.style.color='var(--muted)'">👁</button>
+      </div>
+    </div>
+    <div id="loginError" class="login-error">Usuário ou senha incorretos. Tente novamente.</div>
+    <button type="button" class="btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">Entrar</button>
   </div>
+</div>
 
-  <!-- APP -->
-  <div class="app" id="app">
+<header>
+  <div class="logo">📚</div>
+  <h1>
+    SIEE — Sistema de Informação da Educação Especial
+    <span>Educação Especial · Secretaria Municipal de Educação</span>
+  </h1>
+  <div class="user-badge">
+    Logado como <strong id="userLabel">—</strong>
+    <button class="btn-logout" onclick="doLogout()">Sair</button>
+  </div>
+</header>
 
-    <header class="topbar">
-      <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div>
-          <h1>Protocolo de Atendimento</h1>
-          <p>Educação Inclusiva • Registro e Controle de Solicitações</p>
-          <div style="display:flex; align-items:center; gap:6px; margin:2px 0 0;">
-            <p id="usuario-label" style="margin:0; font-size:12px; color: var(--primary); font-weight:600;"></p>
-            <button id="btn-logout" style="
-              display:none; appearance:none;
-              border:1px solid rgba(37,99,235,.30);
-              background: linear-gradient(180deg, rgba(37,99,235,.10), rgba(37,99,235,.04));
-              color: #0b2a7a; padding: 2px 8px; border-radius: 8px; cursor:pointer;
-              font-size:11px; font-weight:700; line-height:1.6;
-            " title="Sair da sessão">Sair</button>
-          </div>
-        </div>
-      </div>
+<!-- FORM -->
+<form id="neeForm">
 
-      <div class="top-actions">
-        <button class="btn btn-solid" id="btn-salvar-site" type="button">
-          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 21v-8H7v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 3v4h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Salvar no site
-        </button>
-        <button class="btn btn-primary" id="btn-atualizar" type="button" title="Buscar dados mais recentes do servidor">
-          <svg class="icon" viewBox="0 0 24 24" fill="none">
-            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M3 21v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Atualizar
-        </button>
-        <button class="btn btn-primary" id="btn-exportar-excel" type="button">
-          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M12 3v10m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Exportar Excel
-        </button>
-        <button class="btn btn-primary" id="btn-importar-excel" type="button">
-          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M12 21V11m0 0 4 4m-4-4-4 4M5 7V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Importar Excel
-        </button>
-        <button class="btn btn-primary" id="btn-copiar-resumo" type="button">
-          <svg class="icon" viewBox="0 0 24 24" fill="none">
-            <path d="M8 7h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M16 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Copiar pendências
-        </button>
-        <button class="btn btn-danger" id="btn-limpar" type="button">
-          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2m-1 0v16a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6h10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Limpar
-        </button>
-      </div>
-    </header>
-
+  <!-- Identificação -->
+  <div class="card">
+    <div class="card-header">Identificação do Aluno</div>
     <div class="grid">
-      <!-- FORM -->
-      <section class="card">
-        <div class="card-header">
-          <div>
-            <h2>Novo atendimento</h2>
-            <p class="hint">Preencha os dados e registre. O status pode ser alterado na tabela.</p>
-          </div>
-        </div>
-
-        <div class="card-body">
-          <form id="form-atendimento">
-            <div class="form-grid">
-
-              <div class="field col-6">
-                <label for="atendimento">Atendimento</label>
-                <input type="text" id="atendimento" placeholder="Ex.: Solicitação de mediador" required />
-              </div>
-
-              <div class="field col-6">
-                <label for="telefone">Telefone</label>
-                <input type="text" id="telefone" placeholder="(22) 9xxxx-xxxx" required inputmode="tel" />
-              </div>
-
-              <div class="field col-4">
-                <label for="vinculo">Vínculo com a escola</label>
-                <select id="vinculo" required>
-                  <option value="">Selecione</option>
-                  <option value="Diretor">Diretor</option>
-                  <option value="Diretor Adjunto">Diretor Adjunto</option>
-                  <option value="Mãe">Mãe</option>
-                  <option value="Outros">Outros</option>
-                </select>
-              </div>
-
-              <div class="field col-8">
-                <label for="aluno">Aluno</label>
-                <input type="text" id="aluno" placeholder="Nome do aluno" required />
-              </div>
-
-              <div class="field col-2">
-                <label for="idade">Idade</label>
-                <input type="number" id="idade" required min="0" placeholder="0" />
-              </div>
-
-              <div class="field col-2">
-                <label for="ae">AE</label>
-                <select id="ae" required>
-                  <option value="">—</option>
-                  <option value="G1">G1</option><option value="G2">G2</option><option value="G3">G3</option>
-                  <option value="Pré I">Pré I</option><option value="Pré II">Pré II</option>
-                  <option value="1º ano">1º ano</option><option value="2º ano">2º ano</option>
-                  <option value="3º ano">3º ano</option><option value="4º ano">4º ano</option>
-                  <option value="5º ano">5º ano</option><option value="6º ano">6º ano</option>
-                  <option value="7º ano">7º ano</option><option value="8º ano">8º ano</option>
-                  <option value="9º ano">9º ano</option>
-                </select>
-              </div>
-
-              <div class="field col-2">
-                <label for="turno">Turno</label>
-                <select id="turno" required>
-                  <option value="">—</option>
-                  <option value="M">M</option>
-                  <option value="T">T</option>
-                  <option value="I">I</option>
-                </select>
-              </div>
-
-              <div class="field col-6">
-                <label for="psp">PSP</label>
-                <select id="psp" required>
-                  <option value="">— selecione —</option>
-                  <option value="Ana Claudia Meireles">Ana Claudia Meireles</option>
-                  <option value="Bruno Tavares">Bruno Tavares</option>
-                  <option value="Carla Nascimento">Carla Nascimento</option>
-                  <option value="Diego Ferreira">Diego Ferreira</option>
-                  <option value="Elaine Souza">Elaine Souza</option>
-                  <option value="Fábio Andrade">Fábio Andrade</option>
-                  <option value="Gisele Rocha">Gisele Rocha</option>
-                  <option value="Henrique Lima">Henrique Lima</option>
-                  <option value="Isabela Gomes">Isabela Gomes</option>
-                  <option value="Jorge Mendes">Jorge Mendes</option>
-                  <option value="Kátia Vieira">Kátia Vieira</option>
-                  <option value="Lucas Barbosa">Lucas Barbosa</option>
-                  <option value="Mônica Cardoso">Mônica Cardoso</option>
-                  <option value="Nelson Teixeira">Nelson Teixeira</option>
-                  <option value="Odete Freitas">Odete Freitas</option>
-                  <option value="Paulo Ramos">Paulo Ramos</option>
-                  <option value="Queila Borges">Queila Borges</option>
-                  <option value="Roberto Azevedo">Roberto Azevedo</option>
-                </select>
-              </div>
-
-              <div class="field col-12">
-                <label for="escola">Escola</label>
-                <select id="escola" required>
-                  <option value="">— selecione —</option>
-                  <option value="CIEP 001 - Nova Esperança">CIEP 001 - Nova Esperança</option>
-                  <option value="CIEP 033 - Castro Alves">CIEP 033 - Castro Alves</option>
-                  <option value="CIEP 045 - Santos Dumont">CIEP 045 - Santos Dumont</option>
-                  <option value="CIEP 078 - Monteiro Lobato">CIEP 078 - Monteiro Lobato</option>
-                  <option value="CIEP 099 - Olavo Bilac">CIEP 099 - Olavo Bilac</option>
-                  <option value="CIEP 112 - Marechal Deodoro">CIEP 112 - Marechal Deodoro</option>
-                  <option value="EE Cel. Marcelino Pereira">EE Cel. Marcelino Pereira</option>
-                  <option value="EE Dr. Álvaro Henrique">EE Dr. Álvaro Henrique</option>
-                  <option value="EE Floriano Peixoto">EE Floriano Peixoto</option>
-                  <option value="EE Getúlio Vargas">EE Getúlio Vargas</option>
-                  <option value="EE Tiradentes">EE Tiradentes</option>
-                  <option value="EE Visconde de Mauá">EE Visconde de Mauá</option>
-                  <option value="EM Dom Pedro II">EM Dom Pedro II</option>
-                  <option value="EM José de Anchieta">EM José de Anchieta</option>
-                  <option value="EM Machado de Assis">EM Machado de Assis</option>
-                  <option value="EM Prefeito Raimundo Costa">EM Prefeito Raimundo Costa</option>
-                  <option value="EM Prof. João Batista">EM Prof. João Batista</option>
-                  <option value="EM Rui Barbosa">EM Rui Barbosa</option>
-                </select>
-              </div>
-
-              <div class="field col-12">
-                <label for="solicitacao">Descrição da solicitação</label>
-                <textarea id="solicitacao" required rows="3" placeholder="Descreva o pedido de forma objetiva..."></textarea>
-                <div class="subline">
-                  <p class="muted">Dica: informe contexto e urgência (se houver).</p>
-                  <p class="muted">Campos com * são obrigatórios (validação pelo navegador).</p>
-                </div>
-              </div>
-
-              <div class="field col-6">
-                <label for="tipo">Tipo de solicitação</label>
-                <select id="tipo" required>
-                  <option value="">Selecione</option>
-                  <option value="Pedido de Mediador">Pedido de Mediador</option>
-                  <option value="Pedido de Cuidador">Pedido de Cuidador</option>
-                  <option value="Outros">Outros</option>
-                </select>
-              </div>
-
-              <div class="field col-6">
-                <label for="status">Status do atendimento</label>
-                <select id="status" required>
-                  <option value="Pendente">Pendente</option>
-                  <option value="Em andamento">Em andamento</option>
-                  <option value="Concluído">Concluído</option>
-                  <option value="Cancelado">Cancelado</option>
-                </select>
-              </div>
-
-            </div>
-
-            <div class="form-actions">
-              <button class="btn btn-solid" type="submit" style="flex: 1 1 240px; justify-content:center;">
-                <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                Registrar atendimento
-              </button>
-            </div>
-          </form>
-        </div>
-      </section>
-
-      <!-- INFO CARD -->
-      <aside class="card">
-        <div class="card-header">
-          <div>
-            <h2>Operação</h2>
-            <p class="hint">Atalhos e boas práticas</p>
-          </div>
-        </div>
-        <div class="card-body">
-          <ul style="margin:0; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.55;">
-            <li>Os dados são <b>salvos automaticamente</b> após cada ação. Use <b>Salvar no site</b> para forçar um salvamento manual.</li>
-            <li>Use <b>Atualizar</b> para buscar os dados mais recentes do servidor. A página também se atualiza automaticamente a cada 2 minutos.</li>
-            <li>Use <b>Exportar Excel</b> para baixar um arquivo .xlsx com todos os registros.</li>
-            <li>Use <b>Importar Excel</b> para carregar registros de um arquivo .xlsx salvo anteriormente.</li>
-            <li>Para consulta rápida, a tabela é ordenada por <b>PSP</b> (exibição).</li>
-            <li>A tabela mostra campos essenciais. Use <b>Ver</b> para detalhes completos.</li>
-            <li>Use <b>Copiar pendências</b> para gerar um resumo por PSP e colar no WhatsApp/e-mail.</li>
-            <li>Use o campo <b>Filtrar</b> acima da tabela para achar qualquer registro rápido.</li>
-            <li>Use <b>Remover</b> (linha vermelha na tabela) para excluir um atendimento específico.</li>
-          </ul>
-        </div>
-      </aside>
-    </div>
-
-
-    <!-- CARDS DE ESTATÍSTICA -->
-    <div class="stats-grid">
-      <div class="stat-card stat-total">
-        <span class="stat-label">Total</span>
-        <span class="stat-valor" id="stat-total">0</span>
+      <div class="field">
+        <label>Nº <span class="req">*</span></label>
+        <input type="number" id="num" placeholder="Ex.: 1" min="1" required>
       </div>
-      <div class="stat-card stat-pendente">
-        <span class="stat-label">Pendente</span>
-        <span class="stat-valor" id="stat-pendente">0</span>
+      <div class="field">
+        <label>CPF <span class="req">*</span></label>
+        <input type="text" id="cpf" placeholder="000.000.000-00" maxlength="14" required>
       </div>
-      <div class="stat-card stat-andamento">
-        <span class="stat-label">Em andamento</span>
-        <span class="stat-valor" id="stat-andamento">0</span>
+      <div class="field span2">
+        <label>Nome do Aluno <span class="req">*</span></label>
+        <input type="text" id="aluno" placeholder="Nome completo" required>
       </div>
-      <div class="stat-card stat-concluido">
-        <span class="stat-label">Concluído</span>
-        <span class="stat-valor" id="stat-concluido">0</span>
+      <div class="field">
+        <label>Data de Nascimento <span class="req">*</span></label>
+        <input type="date" id="data_nascimento" required>
       </div>
-      <div class="stat-card stat-cancelado">
-        <span class="stat-label">Cancelado</span>
-        <span class="stat-valor" id="stat-cancelado">0</span>
-      </div>
-    </div>
-
-    <!-- TABLE -->
-    <section class="card" style="margin-top:16px;">
-      <div class="card-header">
-        <div>
-          <h2>Atendimentos registrados</h2>
-          <p class="hint">Colunas essenciais — use <b>Ver</b> para detalhes completos.</p>
-        </div>
-      </div>
-
-      <div class="card-body">
-        <div class="table-tools">
-          <div class="search">
-            <input id="filtro-tabela" type="text" placeholder="Filtrar por aluno, escola, AE, PSP, tipo, status..." />
-            <button class="btn btn-primary" id="btn-limpar-filtro" type="button">Limpar filtro</button>
-          </div>
-          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-            <div class="counter" id="contador-tabela">0 de 0</div>
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span style="font-size:12px; color:var(--muted); font-weight:600;">Por página:</span>
-              <select id="registros-por-pagina" style="padding:5px 8px; border-radius:8px; border:1px solid var(--border); font-size:12px; font-weight:600; color:var(--text); background:#fff; cursor:pointer;">
-                <option value="20">20</option>
-                <option value="30" selected>30</option>
-                <option value="50">50</option>
-              </select>
-            </div>
-            <div style="display:flex; align-items:center; gap:4px;" id="paginacao-wrap">
-              <button class="btn btn-primary" id="btn-pag-anterior" type="button" style="padding:5px 10px; font-size:12px;">‹ Anterior</button>
-              <span id="pag-info" style="font-size:12px; color:var(--muted); font-weight:600; white-space:nowrap;">Pág. 1 / 1</span>
-              <button class="btn btn-primary" id="btn-pag-proximo" type="button" style="padding:5px 10px; font-size:12px;">Próximo ›</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="table-wrap">
-          <table id="tabela-atendimentos">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Registrado por</th>
-                <th>Data/Hora</th>
-                <th>Aluno</th>
-                <th>AE</th>
-                <th>Escola</th>
-                <th>PSP Responsável</th>
-                <th>Tipo</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-  </div>
-
-  <!-- MODAL DE DETALHES -->
-  <div id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div>
-          <h3 id="modal-title">Detalhes do atendimento</h3>
-          <span class="modal-id" id="modal-id-label"></span>
-        </div>
-        <button class="modal-close" id="modal-fechar" aria-label="Fechar">✕</button>
-      </div>
-      <div class="modal-body" id="modal-body"></div>
-      <div class="modal-footer">
-        <button class="btn btn-danger" id="modal-remover" style="margin-right:auto;">Remover</button>
-        <button class="btn btn-primary" id="modal-editar">Editar</button>
-        <button class="btn btn-solid" id="modal-salvar-edicao" style="display:none;">Salvar</button>
-        <button class="btn" id="modal-cancelar-edicao" style="display:none;">Cancelar</button>
-        <button class="btn btn-primary" id="modal-alterar-status">Alterar status</button>
-        <button class="btn" id="modal-fechar-btn">Fechar</button>
+      <div class="field">
+        <label>Unidade Escolar <span class="req">*</span></label>
+        <select id="unidade_escolar" required>
+          <option value="">— selecione —</option>
+          <option>EMEF Anísio Teixeira</option>
+          <option>EMEF Dom Pedro II</option>
+          <option>EMEF Machado de Assis</option>
+          <option>EMEF Cecília Meireles</option>
+          <option>EMEF Rui Barbosa</option>
+          <option>EMEF Monteiro Lobato</option>
+          <option>EMEF Clarice Lispector</option>
+          <option>EMEF Carlos Drummond</option>
+          <option>EMEF Castro Alves</option>
+          <option>EMEF Vinícius de Moraes</option>
+        </select>
       </div>
     </div>
   </div>
 
-  <div id="toast"></div>
+  <!-- Escolaridade -->
+  <div class="card">
+    <div class="card-header">Dados Escolares</div>
+    <div class="grid three">
+      <div class="field">
+        <label>Ano de Escolaridade <span class="req">*</span></label>
+        <select id="ano_escolaridade" required>
+          <option value="">— selecione —</option>
+          <option>Berçário</option><option>G1</option><option>G2</option><option>G3</option>
+          <option>Pré I</option><option>Pré II</option><option>1º ano</option><option>2º ano</option>
+          <option>3º ano</option><option>4º ano</option><option>5º ano</option><option>6º ano</option>
+          <option>7º ano</option><option>8º ano</option><option>9º ano</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Turno <span class="req">*</span></label>
+        <select id="turno" required>
+          <option value="">— selecione —</option>
+          <option>Manhã</option><option>Tarde</option><option>Integral</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Ordem Judicial</label>
+        <select id="ordem_judicial">
+          <option value="">— selecione —</option>
+          <option>Sim</option><option>Não</option>
+        </select>
+      </div>
+    </div>
+  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Diagnóstico -->
+  <div class="card">
+    <div class="card-header">Diagnóstico</div>
+    <div class="grid">
+      <div class="field">
+        <label>Tipo de Deficiência <span class="req">*</span></label>
+        <select id="tipo_deficiencia" required>
+          <option value="">— selecione —</option>
+          <option>Autismo - F84.0</option>
+          <option>TDAH - F90.0</option>
+          <option>Deficiência Física - Z73</option>
+          <option>Deficiência Visual - H54</option>
+          <option>Deficiência Auditiva - H90</option>
+          <option>Deficiência Intelectual - F79</option>
+          <option>Transtorno Opositor - F91.3</option>
+          <option>Paralisia Cerebral - G80</option>
+          <option>Síndrome de Down - Q90</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Ano do Laudo</label>
+        <select id="ano_laudo">
+          <option value="">— selecione —</option>
+          <option>2019</option><option>2020</option><option>2021</option><option>2022</option>
+          <option>2023</option><option>2024</option><option>2025</option><option>2026</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Caso Severo</label>
+        <select id="caso_severo">
+          <option value="">— selecione —</option>
+          <option>Sim</option><option>Não</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Situação / Investigação <span class="req">*</span></label>
+        <select id="investigacao" required onchange="onSituacaoChange()">
+          <option value="">— selecione —</option>
+          <option>Com laudo</option>
+          <option>Estudo</option>
+        </select>
+      </div>
+    </div>
+  </div>
 
-  <!-- LOCK SCREEN -->
-  <script>
-    (function(){
-      const USUARIOS = [
-        { nome: "admin",  senha: "4321", admin: true  },
-        { nome: "Cíntia", senha: "123",  admin: false },
-        { nome: "Karla",  senha: "321",  admin: false },
-      ];
+  <!-- Apoio -->
+  <div class="card">
+    <div class="card-header">Apoio e Suporte</div>
+    <div class="grid">
+      <div class="field">
+        <label>Mediador</label>
+        <select id="mediador">
+          <option value="">— selecione —</option>
+          <option>Maria Clara Nunes</option><option>Tereza Lima</option>
+          <option>Rosângela Ferreira</option><option>Carlos Henrique Souza</option>
+          <option>Patrícia Oliveira</option><option>Juliana Alves</option>
+          <option>Fernanda Costa</option><option>André Martins</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Cuidador</label>
+        <select id="cuidador">
+          <option value="">— selecione —</option>
+          <option>Maria Clara Nunes</option><option>Tereza Lima</option>
+          <option>Rosângela Ferreira</option><option>Carlos Henrique Souza</option>
+          <option>Patrícia Oliveira</option><option>Juliana Alves</option>
+          <option>Fernanda Costa</option><option>André Martins</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Sala de Recursos</label>
+        <select id="sala_recursos">
+          <option value="">— selecione —</option>
+          <option>Sim</option><option>Não</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Acompanhamento Institucional</label>
+        <select id="acompanhamento_inst">
+          <option value="">— selecione —</option>
+          <option>Sim</option><option>Não</option>
+        </select>
+      </div>
+      <div class="field span2">
+        <label>O Aluno Necessita de</label>
+        <div class="check-group" id="necessita_group">
+          <label class="check-item"><input type="checkbox" value="Mediação escolar"> Mediação escolar</label>
+          <label class="check-item"><input type="checkbox" value="Apoio psicopedagógico"> Apoio psicopedagógico</label>
+          <label class="check-item"><input type="checkbox" value="Intérprete de Libras"> Intérprete de Libras</label>
+          <label class="check-item"><input type="checkbox" value="Cuidador"> Cuidador</label>
+          <label class="check-item"><input type="checkbox" value="Sala de Recursos"> Sala de Recursos</label>
+          <label class="check-item"><input type="checkbox" value="Acompanhamento terapêutico"> Acompanhamento terapêutico</label>
+        </div>
+      </div>
+    </div>
+  </div>
 
-      const lock      = document.getElementById("lock");
-      const app       = document.getElementById("app");
-      const form      = document.getElementById("lock-form");
-      const passInput = document.getElementById("lock-pass");
-      const nomeInput = document.getElementById("lock-nome");
+  <!-- Actions -->
+  <div class="actions">
+    <button type="button" class="btn-secondary" onclick="clearForm()">↺ Limpar</button>
+    <button type="submit" id="submitBtn" class="btn-primary">✚ Adicionar Registro</button>
+  </div>
 
-      function unlock(nome, isAdminFlag){
-        lock.style.display = "none";
-        app.style.display  = "block";
+</form>
 
-        const label = document.getElementById("usuario-label");
-        if (label) label.textContent = "Usuário: " + nome + (isAdminFlag ? " (admin)" : "");
-        const btnLogout = document.getElementById("btn-logout");
-        if (btnLogout) btnLogout.style.display = "";
+<!-- TABELA -->
+<div class="card" style="max-width:860px;margin:2rem auto 1rem;">
+  <div class="card-header" style="justify-content:space-between;">
+    <span style="display:flex;align-items:center;gap:.5rem">Registros Adicionados</span>
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="searchInput" class="search-input" placeholder="Buscar nome, CPF, escola, deficiência..." oninput="onSearch()">
+      <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Limpar busca" style="display:none">✕</button>
+    </div>
+  </div>
+  <div id="tableArea">
+    <div class="empty-state">Nenhum registro adicionado ainda.</div>
+  </div>
+</div>
 
-        const btnLimpar = document.getElementById("btn-limpar");
-        if (btnLimpar) btnLimpar.style.display = isAdminFlag ? "" : "none";
+<div class="actions" style="max-width:860px;margin:0 auto;">
+  <label class="btn-import" id="btnImport" title="Importar planilha Excel" style="display:none">
+    ⬆ Importar Excel
+    <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none" onchange="importXLSX(this)">
+  </label>
+  <button class="btn-export" id="btnExport" onclick="exportXLSX()" style="display:none">⬇ Exportar para Excel</button>
+  <button class="btn-clear-all" onclick="clearAllRecords()" title="Limpar todos os registros do servidor" id="btnClearAll" style="display:none">🗑 Limpar Tudo</button>
+</div>
 
-        try {
-          sessionStorage.setItem("protocolo_unlock",  "1");
-          sessionStorage.setItem("protocolo_usuario", nome);
-          sessionStorage.setItem("protocolo_role",    isAdminFlag ? "admin" : "user");
-        } catch(e){}
-      }
+<div id="toast">✓ Registro adicionado com sucesso!</div>
 
-      form.addEventListener("submit", function(ev){
-        ev.preventDefault();
-        const nomeDigitado  = (nomeInput.value || "").trim();
-        const senhaDigitada = (passInput.value || "").trim();
+<script>
+  // ── Auth ───────────────────────────────────────────
+  const USERS = {
+    'admin123':      { role: 'admin',  label: 'Administrador',       escola: null },
+    'emef.anisio':   { role: 'escola', label: 'EMEF Anísio Teixeira', escola: 'EMEF Anísio Teixeira',   senha: 'anisio@2025' },
+    // Padrão para adicionar novas escolas:
+    // 'emef.domPedro': { role: 'escola', label: 'EMEF Dom Pedro II', escola: 'EMEF Dom Pedro II', senha: 'domPedro@2025' },
+  };
 
-        if (!nomeDigitado){ nomeInput.focus(); alert("Informe seu nome."); return; }
+  let currentRole   = null;
+  let currentSchool = null; // escola do usuário logado (null = vê tudo)
 
-        const usuario = USUARIOS.find(u =>
-          u.nome.toLowerCase() === nomeDigitado.toLowerCase() &&
-          u.senha === senhaDigitada
-        );
+  function togglePassword() {
+    const input = document.getElementById('loginInput');
+    const btn   = document.getElementById('togglePwd');
+    const show  = input.type === 'password';
+    input.type  = show ? 'text' : 'password';
+    btn.textContent = show ? '🙈' : '👁';
+    input.focus();
+  }
 
-        if (usuario){
-          unlock(usuario.nome, usuario.admin);
-        } else {
-          try {
-            sessionStorage.removeItem("protocolo_unlock");
-            sessionStorage.removeItem("protocolo_usuario");
-            sessionStorage.removeItem("protocolo_role");
-          } catch(e){}
-          passInput.value = "";
-          passInput.focus();
-          alert("Nome ou senha incorretos.");
-        }
+  async function doLogin() {
+    const user = document.getElementById('loginUser').value.trim();
+    const pwd  = document.getElementById('loginInput').value;
+
+    // Admin usa só senha (campo usuário ignorado se senha bater)
+    let userObj = null;
+    if (pwd === 'admin123') {
+      userObj = USERS['admin123'];
+    } else {
+      const entry = USERS[user];
+      if (entry && entry.senha === pwd) userObj = entry;
+    }
+
+    if (!userObj) {
+      document.getElementById('loginError').classList.add('show');
+      document.getElementById('loginInput').value = '';
+      document.getElementById('loginInput').focus();
+      return;
+    }
+
+    currentRole   = userObj.role;
+    currentSchool = userObj.escola;
+
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('userLabel').textContent = userObj.label;
+    document.getElementById('loginUser').value  = '';
+    document.getElementById('loginInput').value = '';
+    document.getElementById('loginError').classList.remove('show');
+
+    showToast('⏳ Carregando dados...');
+    await loadFromServer();
+    const isAdmin = currentRole === 'admin';
+    document.getElementById('btnClearAll').style.display = isAdmin ? 'flex' : 'none';
+    document.getElementById('btnImport').style.display   = isAdmin ? 'flex' : 'none';
+    document.getElementById('btnExport').style.display   = isAdmin ? 'flex' : 'none';
+    renderTable();
+  }
+
+  function doLogout() {
+    currentRole   = null;
+    currentSchool = null;
+    records = [];
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('loginUser').value  = '';
+    document.getElementById('loginInput').value = '';
+    document.getElementById('loginUser').focus();
+    document.getElementById('btnClearAll').style.display = 'none';
+    document.getElementById('btnImport').style.display   = 'none';
+    document.getElementById('btnExport').style.display   = 'none';
+    document.getElementById('tableArea').innerHTML = '<div class="empty-state">Nenhum registro adicionado ainda.</div>';
+  }
+
+  // ── State ──────────────────────────────────────────
+  let records = [];
+  let editIndex = null;
+  let currentPage = 1;
+  let perPage = 20;
+  let searchQuery = '';
+
+  const COLS = [
+    { key: 'num',               label: 'Nº' },
+    { key: 'unidade_escolar',   label: 'Unidade Escolar' },
+    { key: 'cpf',               label: 'CPF' },
+    { key: 'aluno',             label: 'Aluno' },
+    { key: 'data_nascimento',   label: 'Data Nasc.' },
+    { key: 'ordem_judicial',    label: 'Ordem Judicial' },
+    { key: 'ano_escolaridade',  label: 'Ano Escolaridade' },
+    { key: 'turno',             label: 'Turno' },
+    { key: 'ano_laudo',         label: 'Ano Laudo' },
+    { key: 'tipo_deficiencia',  label: 'Tipo Deficiência' },
+    { key: 'caso_severo',       label: 'Caso Severo' },
+    { key: 'mediador',          label: 'Mediador' },
+    { key: 'cuidador',          label: 'Cuidador' },
+    { key: 'sala_recursos',     label: 'Sala Recursos' },
+    { key: 'acompanhamento_inst', label: 'Acomp. Inst.' },
+    { key: 'necessita',         label: 'Necessita' },
+    { key: 'investigacao',      label: 'Situação' },
+  ];
+
+  // ── CPF mask ───────────────────────────────────────
+  document.getElementById('cpf').addEventListener('input', function () {
+    let v = this.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+    else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+    else if (v.length > 3) v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+    this.value = v;
+  });
+
+  // ── JSONBin.io ─────────────────────────────────────
+  const JSONBIN_KEY = '$2a$10$UysIHXuZc3gSJiGlA..wruUCvTHTiHK7C9XVm5QHOAMGqV/ue2PFi';
+  let BIN_ID = '69d8ef25856a6821891bc936';
+
+  async function loadFromServer() {
+    if (!BIN_ID) return; // bin ainda não criado
+    try {
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': JSONBIN_KEY }
       });
-
-      try {
-        if (sessionStorage.getItem("protocolo_unlock") === "1"){
-          const nome        = sessionStorage.getItem("protocolo_usuario") || "Usuário";
-          const isAdminFlag = sessionStorage.getItem("protocolo_role") === "admin";
-          unlock(nome, isAdminFlag);
-        } else {
-          nomeInput.focus();
-        }
-      } catch(e){ nomeInput.focus(); }
-    })();
-  </script>
-
-  <script>
-    // ╔══════════════════════════════════════════════════════════════╗
-    // ║  LISTAS CENTRALIZADAS — edite apenas aqui                   ║
-    // ╚══════════════════════════════════════════════════════════════╝
-    const LISTA_AE = [
-      "G1","G2","G3","Pré I","Pré II",
-      "1º ano","2º ano","3º ano","4º ano","5º ano",
-      "6º ano","7º ano","8º ano","9º ano"
-    ];
-
-    const LISTA_TURNOS = ["M", "T", "I"];
-
-    const LISTA_PSPS = [
-      "Ana Claudia Meireles","Bruno Tavares","Carla Nascimento","Diego Ferreira",
-      "Elaine Souza","Fábio Andrade","Gisele Rocha","Henrique Lima",
-      "Isabela Gomes","Jorge Mendes","Kátia Vieira","Lucas Barbosa",
-      "Mônica Cardoso","Nelson Teixeira","Odete Freitas","Paulo Ramos",
-      "Queila Borges","Roberto Azevedo"
-    ];
-
-    const LISTA_ESCOLAS = [
-      "CIEP 001 - Nova Esperança","CIEP 033 - Castro Alves","CIEP 045 - Santos Dumont",
-      "CIEP 078 - Monteiro Lobato","CIEP 099 - Olavo Bilac","CIEP 112 - Marechal Deodoro",
-      "EE Cel. Marcelino Pereira","EE Dr. Álvaro Henrique","EE Floriano Peixoto",
-      "EE Getúlio Vargas","EE Tiradentes","EE Visconde de Mauá",
-      "EM Dom Pedro II","EM José de Anchieta","EM Machado de Assis",
-      "EM Prefeito Raimundo Costa","EM Prof. João Batista","EM Rui Barbosa"
-    ];
-
-    const JSONBIN_API_KEY = "$2a$10$UysIHXuZc3gSJiGlA..wruUCvTHTiHK7C9XVm5QHOAMGqV/ue2PFi";
-    const JSONBIN_BIN_ID  = "69ad51f2ae596e708f6c7426";
-    const JSONBIN_BASE    = "https://api.jsonbin.io/v3/b";
-  </script>
-
-  <script>
-    /* ---------- utilidades ---------- */
-    function usuarioAtual(){
-      try { return sessionStorage.getItem("protocolo_usuario") || "Desconhecido"; }
-      catch(e){ return "Desconhecido"; }
+      const data = await res.json();
+      records = data.record.records || [];
+    } catch (e) {
+      console.error('Erro ao carregar dados:', e);
     }
+  }
 
-    function isAdmin(){
-      try { return sessionStorage.getItem("protocolo_role") === "admin"; }
-      catch(e){ return false; }
-    }
-
-    function proximoId(){
-      let max = 0;
-      for (const a of atendimentosAll){
-        const match = (a.id || "").match(/^AT-(\d+)$/i);
-        if (match) max = Math.max(max, parseInt(match[1], 10));
+  async function saveToServer() {
+    const body = JSON.stringify({ records });
+    try {
+      if (!BIN_ID) {
+        // Cria o bin na primeira vez
+        const res = await fetch('https://api.jsonbin.io/v3/b', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': JSONBIN_KEY,
+            'X-Bin-Name': 'quadro-nee',
+            'X-Bin-Private': 'true'
+          },
+          body
+        });
+        const data = await res.json();
+        BIN_ID = data.metadata.id;
+      } else {
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': JSONBIN_KEY
+          },
+          body
+        });
       }
-      return "AT-" + String(max + 1).padStart(4, "0");
+    } catch (e) {
+      console.error('Erro ao salvar dados:', e);
+      showToast('⚠ Erro ao salvar no servidor.');
+    }
+  }
+
+  // ── Form submit ────────────────────────────────────
+  document.getElementById('neeForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const necessita = [...document.querySelectorAll('#necessita_group input:checked')]
+      .map(cb => cb.value).join('; ');
+
+    const row = {};
+    COLS.forEach(c => {
+      if (c.key === 'necessita') {
+        row[c.key] = necessita;
+      } else {
+        const el = document.getElementById(c.key);
+        row[c.key] = el ? el.value : '';
+      }
+    });
+
+    if (editIndex !== null) {
+      records[editIndex] = row;
+      editIndex = null;
+      document.getElementById('submitBtn').textContent = '✚ Adicionar Registro';
+      document.getElementById('neeForm').classList.remove('editing-mode');
+      showToast('✏ Registro atualizado com sucesso!');
+    } else {
+      records.push(row);
+      currentPage = Math.ceil(records.length / perPage); // vai para última página
+      showToast('✓ Registro salvo com sucesso!');
     }
 
-    let toastTimer = null;
-    function toast(msg, tipo = "ok", duracao = 3000){
-      const el = document.getElementById("toast");
-      el.textContent = msg;
-      el.className   = "show toast-" + tipo;
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => { el.className = ""; }, duracao);
+    renderTable();
+    clearForm();
+    await saveToServer();
+  });
+
+  // ── Render table ───────────────────────────────────
+  function renderTable() {
+    const area = document.getElementById('tableArea');
+
+    // Filtra por escola do usuário logado (se aplicável)
+    const schoolFiltered = currentSchool
+      ? records.filter(r => r.unidade_escolar === currentSchool)
+      : records;
+
+    // Filtra registros conforme busca
+    const q = searchQuery.trim().toLowerCase();
+    const searchKeys = ['num','aluno','cpf','unidade_escolar','tipo_deficiencia','turno','investigacao','mediador','cuidador'];
+    const filtered = q
+      ? schoolFiltered.filter(r => searchKeys.some(k => (r[k] || '').toLowerCase().includes(q)))
+      : schoolFiltered;
+
+    if (records.length === 0) {
+      area.innerHTML = '<div class="empty-state">Nenhum registro adicionado ainda.</div>';
+      return;
+    }
+    if (filtered.length === 0 && !q) {
+      area.innerHTML = `<div class="empty-state">Nenhum registro encontrado para <strong>${currentSchool}</strong>.</div>`;
+      return;
+    }
+    if (filtered.length === 0) {
+      area.innerHTML = `<div class="empty-state">Nenhum resultado para "<strong>${q}</strong>".</div>`;
+      return;
     }
 
-    /* ---------- auto-save ---------- */
-    let autoSaveTimer = null;
-    function autoSave(onConcluido = null){
-      clearTimeout(autoSaveTimer);
-      const btn = document.getElementById("btn-salvar-site");
-      btn.disabled = true;
-      btn.innerHTML = `<span class="spinner"></span> Salvando…`;
+    const totalPages = Math.ceil(filtered.length / perPage);
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage - 1) * perPage;
+    const pageRecords = filtered.slice(start, start + perPage);
 
-      autoSaveTimer = setTimeout(async () => {
-        const payload = atendimentosAll.length > 0 ? atendimentosAll : [{"__vazio": true}];
-        try {
-          const res = await fetch(`${JSONBIN_BASE}/${JSONBIN_BIN_ID}`, {
-            method:  "PUT",
-            headers: { "Content-Type": "application/json", "X-Master-Key": JSONBIN_API_KEY },
-            body: JSON.stringify(payload)
+    // Função para destacar o termo buscado no texto
+    function hl(text) {
+      if (!q) return text;
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return String(text).replace(new RegExp(`(${escaped})`, 'gi'), '<mark class="hl">$1</mark>');
+    }
+
+    const visibleCols = ['num', 'aluno', 'unidade_escolar', 'tipo_deficiencia', 'turno', 'investigacao'];
+    const colWidths = {
+      num: '40px', aluno: '22%', unidade_escolar: '20%',
+      tipo_deficiencia: '22%', turno: '70px', investigacao: '90px',
+    };
+
+    let html = '<div class="table-wrap"><table style="table-layout:fixed;width:100%"><thead><tr>';
+    visibleCols.forEach(k => {
+      const col = COLS.find(c => c.key === k);
+      html += `<th style="width:${colWidths[k]}">${col ? col.label : k}</th>`;
+    });
+    html += '<th style="width:90px">Ações</th></tr></thead><tbody>';
+
+    pageRecords.forEach((r, pi) => {
+      // índice real no array original (para editar/excluir corretamente)
+      const i = records.indexOf(r);
+      html += '<tr>';
+      visibleCols.forEach(k => {
+        let val = r[k] || '—';
+        const tdClass = k === 'investigacao' ? ' class="col-investigacao"' : '';
+        if (k === 'investigacao' || k === 'caso_severo' || k === 'ordem_judicial') {
+          const display = k === 'investigacao' && val === 'Em investigação estudo' ? 'Estudo' : val;
+          const cls = val === 'Sim' || val === 'Com laudo' ? 'badge-yes' : 'badge-no';
+          val = `<span class="badge ${cls}" title="${val}">${hl(display)}</span>`;
+        } else if (['aluno','unidade_escolar','tipo_deficiencia'].includes(k)) {
+          val = `<span title="${r[k]||''}" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${hl(val)}</span>`;
+        } else {
+          val = hl(val);
+        }
+        html += `<td${tdClass} style="overflow:hidden;max-width:0">${val}</td>`;
+      });
+      const editBtn = `<button class="edit-btn" title="Editar registro" onclick="editRecord(${i})">✏</button>`;
+      const delBtn  = currentRole === 'admin'
+        ? `<button class="del-btn" title="Excluir registro" onclick="removeRecord(${i})">✕</button>`
+        : '';
+      html += `<td style="white-space:nowrap">${editBtn}${delBtn}</td>`;
+      html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+
+    // Paginação
+    const from = start + 1;
+    const to   = Math.min(start + perPage, filtered.length);
+    const info = q
+      ? `${filtered.length} resultado(s) para "${q}" · Exibindo ${from}–${to}`
+      : `Exibindo ${from}–${to} de ${records.length} registros`;
+
+    html += `<div class="pagination">
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <span class="pagination-info">${info}</span>
+        <select class="per-page-select" onchange="changePerPage(this.value)" title="Registros por página">
+          <option value="20" ${perPage===20?'selected':''}>20 / pág</option>
+          <option value="30" ${perPage===30?'selected':''}>30 / pág</option>
+          <option value="50" ${perPage===50?'selected':''}>50 / pág</option>
+          <option value="100" ${perPage===100?'selected':''}>100 / pág</option>
+        </select>
+      </div>
+      <div class="pagination-controls">
+        <button class="page-btn" onclick="goPage(1)" ${currentPage===1?'disabled':''}>«</button>
+        <button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+
+    const delta = 2;
+    let pStart = Math.max(1, currentPage - delta);
+    let pEnd   = Math.min(totalPages, currentPage + delta);
+    if (pEnd - pStart < 4) { pStart = Math.max(1, pEnd - 4); pEnd = Math.min(totalPages, pStart + 4); }
+    for (let p = pStart; p <= pEnd; p++) {
+      html += `<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+    }
+    html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>
+        <button class="page-btn" onclick="goPage(${totalPages})" ${currentPage===totalPages?'disabled':''}>»</button>
+      </div></div>`;
+
+    area.innerHTML = html;
+  }
+
+  // ── Search ──────────────────────────────────────────
+  function onSearch() {
+    searchQuery = document.getElementById('searchInput').value;
+    document.getElementById('searchClear').style.display = searchQuery ? 'block' : 'none';
+    currentPage = 1;
+    renderTable();
+  }
+
+  function clearSearch() {
+    searchQuery = '';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchClear').style.display = 'none';
+    currentPage = 1;
+    renderTable();
+    document.getElementById('searchInput').focus();
+  }
+
+  function goPage(p) {
+    const q = searchQuery.trim().toLowerCase();
+    const searchKeys = ['num','aluno','cpf','unidade_escolar','tipo_deficiencia','turno','investigacao','mediador','cuidador'];
+    const filtered = q ? records.filter(r => searchKeys.some(k => (r[k]||'').toLowerCase().includes(q))) : records;
+    const totalPages = Math.ceil(filtered.length / perPage);
+    currentPage = Math.max(1, Math.min(p, totalPages));
+    renderTable();
+  }
+
+  function changePerPage(val) {
+    perPage = parseInt(val);
+    currentPage = 1;
+    renderTable();
+  }
+
+  async function removeRecord(i) {
+    records.splice(i, 1);
+    renderTable();
+    await saveToServer();
+    showToast('🗑 Registro excluído.');
+  }
+
+  async function clearAllRecords() {
+    if (!confirm(`Tem certeza que deseja apagar TODOS os ${records.length} registro(s)?\n\nEssa ação não pode ser desfeita.`)) return;
+    records = [];
+    currentPage = 1;
+    renderTable();
+    await saveToServer();
+    showToast('🗑 Todos os registros foram removidos.');
+  }
+
+  function editRecord(i) {
+    const r = records[i];
+    editIndex = i;
+
+    // Preenche todos os campos do formulário
+    COLS.forEach(c => {
+      if (c.key === 'necessita') {
+        // Desmarca todos e marca os corretos
+        document.querySelectorAll('#necessita_group input[type="checkbox"]').forEach(cb => {
+          cb.checked = (r.necessita || '').split('; ').includes(cb.value);
+        });
+      } else {
+        const el = document.getElementById(c.key);
+        if (el) el.value = r[c.key] || '';
+      }
+    });
+
+    // Atualiza bloqueio de mediador/cuidador conforme situação
+    onSituacaoChange();
+
+    // Atualiza botão e destaque visual
+    document.getElementById('submitBtn').textContent = '💾 Salvar Alterações';
+    document.getElementById('neeForm').classList.add('editing-mode');
+
+    // Rola até o formulário
+    document.getElementById('neeForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Situação → bloqueia mediador/cuidador se "Estudo" ──
+  function onSituacaoChange() {
+    const isEstudo = document.getElementById('investigacao').value === 'Estudo';
+    const blocked = ['mediador', 'cuidador'];
+    blocked.forEach(id => {
+      const el = document.getElementById(id);
+      if (isEstudo) {
+        el.value = '';
+        el.disabled = true;
+      } else {
+        el.disabled = false;
+      }
+    });
+  }
+
+  // ── Clear form ─────────────────────────────────────
+  function clearForm() {
+    document.getElementById('neeForm').reset();
+    editIndex = null;
+    document.getElementById('submitBtn').textContent = '✚ Adicionar Registro';
+    document.getElementById('neeForm').classList.remove('editing-mode');
+  }
+
+  // ── Toast ──────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── Import XLSX ────────────────────────────────────
+  function importXLSX(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+
+        const sheetName = wb.SheetNames.find(n => n.toLowerCase().includes('aluno')) || wb.SheetNames[0];
+        const ws = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+        if (rows.length === 0) {
+          showToast('⚠ Nenhum dado encontrado na planilha.');
+          input.value = '';
+          return;
+        }
+
+        // Normaliza cabeçalhos: mapeia nomes da planilha para as chaves internas
+        const keyMap = {
+          'num': 'num', 'unidade_escolar': 'unidade_escolar', 'cpf': 'cpf',
+          'aluno': 'aluno', 'data_nascimento': 'data_nascimento',
+          'ordem_judicial': 'ordem_judicial', 'ano_escolaridade': 'ano_escolaridade',
+          'turno': 'turno', 'ano_laudo': 'ano_laudo', 'tipo_deficiencia': 'tipo_deficiencia',
+          'caso_severo': 'caso_severo', 'mediador': 'mediador', 'cuidador': 'cuidador',
+          'sala_recursos': 'sala_recursos', 'acompanhamento_inst': 'acompanhamento_inst',
+          'necessita': 'necessita', 'investigacao': 'investigacao'
+        };
+
+        const imported = rows.map(row => {
+          const record = {};
+          COLS.forEach(col => {
+            // Para o campo investigacao, aceita também o nome antigo "situacao" na planilha
+            const aliases = col.key === 'investigacao' ? [col.key, 'situacao'] : [col.key];
+            const rawKey = Object.keys(row).find(k => aliases.includes(k.toLowerCase())) || col.key;
+            let val = row[rawKey] !== undefined ? String(row[rawKey]) : '';
+
+            // Formata data se for objeto Date
+            if (col.key === 'data_nascimento' && row[rawKey] instanceof Date) {
+              const d = row[rawKey];
+              val = d.toISOString().slice(0, 10);
+            } else if (col.key === 'data_nascimento' && val) {
+              // Tenta converter número serial do Excel para data
+              const num = parseFloat(val);
+              if (!isNaN(num) && num > 1000) {
+                const d = new Date(Math.round((num - 25569) * 86400 * 1000));
+                val = d.toISOString().slice(0, 10);
+              }
+            }
+
+            // Limpa ".0" de anos numéricos
+            if (col.key === 'ano_laudo' && val.endsWith('.0')) val = val.replace('.0', '');
+            if (col.key === 'num' && val.endsWith('.0')) val = val.replace('.0', '');
+            if (col.key === 'investigacao' && val === 'Em investigação estudo') val = 'Estudo';
+
+            record[col.key] = val;
           });
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          btn.disabled = false;
-          btn.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Salvo ✓`;
-          setTimeout(() => { btn.innerHTML = BTN_SALVAR_HTML; }, 2000);
-        } catch(err){
-          btn.disabled = false;
-          btn.innerHTML = BTN_SALVAR_HTML;
-          toast("Auto-save falhou. Salve manualmente.", "err", 4000);
-          console.error("auto-save:", err);
-        } finally {
-          if (typeof onConcluido === "function") onConcluido();
-        }
-      }, 1500);
-    }
-
-    const BTN_SALVAR_HTML = `<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 21v-8H7v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 3v4h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Salvar no site`;
-
-    /* ---------- estado ---------- */
-    let atendimentosAll = [];
-
-    /* ---------- migração ---------- */
-    const ANOS_VALIDOS = new Set([
-      "g1","g2","g3","pré i","pré ii","pre i","pre ii",
-      "1º ano","2º ano","3º ano","4º ano","5º ano",
-      "6º ano","7º ano","8º ano","9º ano",
-      "1o ano","2o ano","3o ano","4o ano","5o ano",
-      "6o ano","7o ano","8o ano","9o ano",
-    ]);
-
-    const ANOS_LISTA = ["G1","G2","G3","Pré I","Pré II",
-      "1º ano","2º ano","3º ano","4º ano","5º ano",
-      "6º ano","7º ano","8º ano","9º ano"];
-
-    function migrarRegistro(r) {
-      let ae    = (r.ae    || "").trim();
-      let escola = (r.escola || "").trim();
-      if (ae && !ANOS_VALIDOS.has(ae.toLowerCase())) {
-        escola = escola || ae;
-        ae = "";
-      }
-      if (!ae) {
-        const seed = parseInt((r.id || "0").replace(/\D/g,""), 10) || 0;
-        ae = ANOS_LISTA[seed % ANOS_LISTA.length];
-      }
-      return { ...r, ae, escola };
-    }
-
-    /* ---------- carregar do servidor ---------- */
-    async function carregarDoServidor(silencioso = false){
-      const btnAtualizar = document.getElementById("btn-atualizar");
-      if (!silencioso){
-        if (btnAtualizar){ btnAtualizar.disabled = true; btnAtualizar.innerHTML = `<span class="spinner spinner-dark"></span> Atualizando…`; }
-        setBtnSalvarLoading(true);
-      }
-      try {
-        const res = await fetch(`${JSONBIN_BASE}/${JSONBIN_BIN_ID}/latest`, {
-          headers: { "X-Master-Key": JSONBIN_API_KEY }
+          return record;
         });
-        if (res.status === 401) throw new Error("auth");
-        if (res.status === 404) throw new Error("notfound");
-        if (!res.ok) throw new Error("HTTP " + res.status);
 
-        const json   = await res.json();
-        const record = json.record;
-        let lista = [];
-        if (Array.isArray(record)) lista = record;
-        else if (record && Array.isArray(record.atendimentos)) lista = record.atendimentos;
-
-        atendimentosAll = lista.filter(r => !r.__vazio).map(migrarRegistro);
-        listarAtendimentos();
-        if (!silencioso) toast(`${atendimentosAll.length} atendimento(s) carregado(s) ✓`, "ok");
-      } catch(err){
-        if (!silencioso){
-          atendimentosAll = [];
-          listarAtendimentos();
-          if (err.message === "auth")          toast("API Key inválida.", "err", 6000);
-          else if (err.message === "notfound") toast("Bin ID não encontrado.", "err", 6000);
-          else                                 toast("Não foi possível conectar ao servidor.", "err", 5000);
-        }
+        records = imported;
+        currentPage = 1;
+        renderTable();
+        saveToServer().then(() => showToast(`✓ ${imported.length} registro(s) importado(s) e salvos!`));
+      } catch (err) {
+        showToast('⚠ Erro ao ler a planilha. Verifique o arquivo.');
         console.error(err);
-      } finally {
-        if (!silencioso){
-          setBtnSalvarLoading(false);
-          if (btnAtualizar){
-            btnAtualizar.disabled = false;
-            btnAtualizar.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 21v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Atualizar`;
-          }
-        }
       }
+      input.value = ''; // reset para permitir reimportar o mesmo arquivo
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // ── Export XLSX (formatação idêntica à planilha original) ──
+  async function exportXLSX() {
+    if (records.length === 0) {
+      showToast('⚠ Nenhum registro para exportar.');
+      return;
     }
 
-    /* ---------- salvar ---------- */
-    async function salvarNoServidor(){
-      setBtnSalvarLoading(true);
-      const payload = atendimentosAll.length > 0 ? atendimentosAll : [{"__vazio": true}];
-      try {
-        const res = await fetch(`${JSONBIN_BASE}/${JSONBIN_BIN_ID}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", "X-Master-Key": JSONBIN_API_KEY },
-          body: JSON.stringify(payload)
-        });
-        if (res.status === 401) throw new Error("auth");
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        if (atendimentosAll.length > 0) toast("Dados salvos no site com sucesso ✓", "ok");
-        return true;
-      } catch(err){
-        if (err.message === "auth") toast("API Key inválida — dados não foram salvos.", "err", 6000);
-        else toast("Falha ao salvar. Verifique sua conexão.", "err", 5000);
-        console.error(err);
-        return false;
-      } finally {
-        setBtnSalvarLoading(false);
-      }
-    }
+    const wb = new ExcelJS.Workbook();
 
-    function setBtnSalvarLoading(on){
-      const btn = document.getElementById("btn-salvar-site");
-      if (on){ btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> Salvando…`; }
-      else   { btn.disabled = false; btn.innerHTML = BTN_SALVAR_HTML; }
-    }
+    // ── Sheet 1: aluno NEE ──────────────────────────────────
+    const ws = wb.addWorksheet('aluno NEE');
 
-    /* ---------- paginação ---------- */
-    let paginaAtual = 1;
-    function registrosPorPagina(){
-      const sel = document.getElementById("registros-por-pagina");
-      return sel ? parseInt(sel.value) : 30;
-    }
-
-    /* ---------- tabela ---------- */
-    function listarAtendimentos(resetarPagina = false){
-      if (resetarPagina) paginaAtual = 1;
-
-      const tbody      = document.querySelector("#tabela-atendimentos tbody");
-      const filtroEl   = document.getElementById("filtro-tabela");
-      const contadorEl = document.getElementById("contador-tabela");
-      tbody.innerHTML  = "";
-
-      const filtro = (filtroEl?.value || "").trim().toLowerCase();
-      const sorted = atendimentosAll.slice().sort((a, b) => (a.psp || "").localeCompare(b.psp || ""));
-      const lista  = !filtro ? sorted : sorted.filter(a => {
-        const blob = [a.id, a.registradoPor, a.dataHora, a.atendimento, a.telefone,
-                      a.vinculo, a.aluno, a.idade, a.ae, a.escola, a.turno,
-                      a.psp, a.solicitacao, a.tipo, a.status].join(" ").toLowerCase();
-        return blob.includes(filtro);
-      });
-
-      const rpp       = registrosPorPagina();
-      const totalPags = Math.max(1, Math.ceil(lista.length / rpp));
-      if (paginaAtual > totalPags) paginaAtual = totalPags;
-      const inicio = (paginaAtual - 1) * rpp;
-      const pagina = lista.slice(inicio, inicio + rpp);
-
-      if (contadorEl) contadorEl.textContent = `${lista.length} de ${atendimentosAll.length}`;
-
-      // Atualizar cards de estatística (total geral, não só a página)
-      const contagens = { Pendente: 0, "Em andamento": 0, "Concluído": 0, Cancelado: 0 };
-      for (const a of atendimentosAll){
-        const s = a.status || "Pendente";
-        if (s in contagens) contagens[s]++;
-      }
-      const elTotal     = document.getElementById("stat-total");
-      const elPendente  = document.getElementById("stat-pendente");
-      const elAndamento = document.getElementById("stat-andamento");
-      const elConcluido = document.getElementById("stat-concluido");
-      const elCancelado = document.getElementById("stat-cancelado");
-      if (elTotal)     elTotal.textContent     = atendimentosAll.length;
-      if (elPendente)  elPendente.textContent  = contagens["Pendente"];
-      if (elAndamento) elAndamento.textContent = contagens["Em andamento"];
-      if (elConcluido) elConcluido.textContent = contagens["Concluído"];
-      if (elCancelado) elCancelado.textContent = contagens["Cancelado"];
-
-      const pagInfo = document.getElementById("pag-info");
-      if (pagInfo) pagInfo.textContent = `Pág. ${paginaAtual} / ${totalPags}`;
-
-      const btnAnterior = document.getElementById("btn-pag-anterior");
-      const btnProximo  = document.getElementById("btn-pag-proximo");
-      if (btnAnterior) btnAnterior.disabled = paginaAtual <= 1;
-      if (btnProximo)  btnProximo.disabled  = paginaAtual >= totalPags;
-
-      const wrapPag = document.getElementById("paginacao-wrap");
-      if (wrapPag) wrapPag.style.display = totalPags <= 1 ? "none" : "flex";
-
-      pagina.forEach(a => {
-        const row = document.createElement("tr");
-        [a.id, a.registradoPor || "—", a.dataHora, a.aluno, a.ae, a.escola || "—", a.psp, a.tipo].forEach(val => {
-          const td = document.createElement("td"); td.textContent = val ?? ""; row.appendChild(td);
-        });
-
-        const tdStatus = document.createElement("td");
-        const badge    = document.createElement("span");
-        badge.className   = "badge " + badgeClass(a.status);
-        badge.textContent = a.status || "Pendente";
-        tdStatus.appendChild(badge); row.appendChild(tdStatus);
-
-        const tdAcoes = document.createElement("td");
-        const wrap    = document.createElement("div"); wrap.className = "acoes-wrap";
-        const btnVer  = document.createElement("button");
-        btnVer.type = "button"; btnVer.className = "acoes-btn"; btnVer.textContent = "Ver detalhes"; btnVer.style.whiteSpace = "nowrap";
-        btnVer.addEventListener("click", () => abrirModal(a.id));
-        wrap.appendChild(btnVer); tdAcoes.appendChild(wrap); row.appendChild(tdAcoes);
-        tbody.appendChild(row);
-      });
-    }
-
-    const STATUS_CICLO = ["Pendente", "Em andamento", "Concluído", "Cancelado"];
-
-    function badgeClass(status){
-      if (status === "Atendido" || status === "Concluído") return "badge-concluido";
-      if (status === "Em andamento")                       return "badge-andamento";
-      if (status === "Cancelado")                          return "badge-cancelado";
-      return "badge-pendente";
-    }
-
-    function editarStatus(id){
-      const i = atendimentosAll.findIndex(x => x.id === id);
-      if (i === -1) return;
-      const atual = atendimentosAll[i].status || "Pendente";
-      const idx   = STATUS_CICLO.indexOf(atual);
-      atendimentosAll[i].status = STATUS_CICLO[(idx + 1) % STATUS_CICLO.length];
-      listarAtendimentos();
-      toast(`Status → ${atendimentosAll[i].status}.`, "ok");
-      autoSave();
-    }
-
-    function removerAtendimento(id){
-      if (!confirm("Remover este atendimento?")) return;
-      atendimentosAll = atendimentosAll.filter(x => x.id !== id);
-      listarAtendimentos();
-      toast("Atendimento removido.", "ok");
-      autoSave();
-    }
-
-    /* ---------- registrar novo ---------- */
-    document.getElementById("form-atendimento").addEventListener("submit", function(e){
-      e.preventDefault();
-      const usuario = (() => { try { return sessionStorage.getItem("protocolo_usuario") || ""; } catch(e){ return ""; } })();
-      const novo = {
-        id:            proximoId(),
-        registradoPor: usuario,
-        dataHora:      new Date().toLocaleString(),
-        atendimento:   document.getElementById("atendimento").value.trim(),
-        telefone:      document.getElementById("telefone").value.trim(),
-        vinculo:       document.getElementById("vinculo").value,
-        aluno:         document.getElementById("aluno").value.trim(),
-        idade:         document.getElementById("idade").value,
-        ae:            document.getElementById("ae").value.trim(),
-        escola:        document.getElementById("escola").value.trim(),
-        turno:         document.getElementById("turno").value.trim(),
-        psp:           document.getElementById("psp").value.trim(),
-        solicitacao:   document.getElementById("solicitacao").value.trim(),
-        tipo:          document.getElementById("tipo").value,
-        status:        document.getElementById("status").value
-      };
-
-      atendimentosAll.push(novo);
-      listarAtendimentos();
-      e.target.reset();
-      toast("Atendimento registrado.", "ok");
-
-      const btnSubmit = e.target.querySelector("[type=submit]");
-      if (btnSubmit){
-        btnSubmit.disabled = true;
-        btnSubmit.innerHTML = `<span class="spinner"></span> Salvando…`;
-      }
-      autoSave(() => {
-        if (btnSubmit){
-          btnSubmit.disabled = false;
-          btnSubmit.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Registrar atendimento`;
-        }
-      });
-    });
-
-    document.getElementById("btn-salvar-site").addEventListener("click", salvarNoServidor);
-
-    /* ---------- Exportar Excel ---------- */
-    document.getElementById("btn-exportar-excel").addEventListener("click", () => {
-      if (atendimentosAll.length === 0){ toast("Não há atendimentos para exportar.", "err"); return; }
-      const rows = atendimentosAll.map(a => ({
-        "ID":              a.id,
-        "Registrado por":  a.registradoPor || "",
-        "Data/Hora":       a.dataHora,
-        "Atendimento":     a.atendimento,
-        "Telefone":        a.telefone,
-        "Vínculo":         a.vinculo,
-        "Aluno":           a.aluno,
-        "Idade":           a.idade,
-        "AE":              a.ae,
-        "Escola":          a.escola || "",
-        "Turno":           a.turno,
-        "PSP Responsável": a.psp,
-        "Solicitação":     a.solicitacao,
-        "Tipo":            a.tipo,
-        "Status":          a.status
-      }));
-      const ws = XLSX.utils.json_to_sheet(rows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Atendimentos");
-      XLSX.writeFile(wb, "atendimentos.xlsx");
-      toast("Excel exportado ✓", "ok");
-    });
-
-    /* ---------- Importar Excel ---------- */
-    document.getElementById("btn-importar-excel").addEventListener("click", () => {
-      const input = document.createElement("input");
-      input.type   = "file";
-      input.accept = ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-      input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        try {
-          const data = await file.arrayBuffer();
-          const wb   = XLSX.read(data, { type: "array" });
-          const ws   = wb.Sheets[wb.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
-          if (!Array.isArray(rows)) throw new Error("Formato inválido.");
-
-          const normalizados = rows.map(r => ({
-            id:            (r["ID"]            || r["id"]            || proximoId()).toString(),
-            registradoPor: (r["Registrado por"] || r["registradoPor"] || "").toString(),
-            dataHora:      (r["Data/Hora"]      || r["dataHora"]      || new Date().toLocaleString()).toString(),
-            atendimento:   (r["Atendimento"]    || r["atendimento"]   || "").toString(),
-            telefone:      (r["Telefone"]        || r["telefone"]      || "").toString(),
-            vinculo:       (r["Vínculo"]         || r["Vinculo"]       || r["vinculo"] || "").toString(),
-            aluno:         (r["Aluno"]           || r["aluno"]         || "").toString(),
-            idade:         (r["Idade"]           || r["idade"]         || "").toString(),
-            ae:            (r["AE"]              || r["ae"]            || "").toString(),
-            escola:        (r["Escola"]          || r["escola"]        || "").toString(),
-            turno:         (r["Turno"]           || r["turno"]         || "").toString(),
-            psp:           (r["PSP Responsável"] || r["PSP Responsavel"] || r["psp"] || "").toString(),
-            solicitacao:   (r["Solicitação"]     || r["Solicitacao"]   || r["solicitacao"] || "").toString(),
-            tipo:          (r["Tipo"]            || r["tipo"]          || "").toString(),
-            status:        ((r["Status"]         || r["status"]        || "Pendente").toString() === "Atendido")
-                              ? "Atendido" : "Pendente"
-          }));
-
-          atendimentosAll = normalizados.map(migrarRegistro);
-          listarAtendimentos();
-          toast(`${normalizados.length} atendimentos importados.`, "ok", 3000);
-          autoSave();
-        } catch(err){
-          toast("Arquivo inválido ou corrompido.", "err");
-        }
-      };
-      input.click();
-    });
-
-    /* ---------- Copiar pendências ---------- */
-    document.getElementById("btn-copiar-resumo").addEventListener("click", async () => {
-      const pendentes = atendimentosAll.filter(a => ["Pendente","Em andamento"].includes(a.status || "Pendente"));
-      if (pendentes.length === 0){ toast("Não há pendências.", "err"); return; }
-
-      const grupos = new Map();
-      for (const a of pendentes){
-        const psp = (a.psp || "Sem PSP").trim() || "Sem PSP";
-        if (!grupos.has(psp)) grupos.set(psp, []);
-        grupos.get(psp).push(a);
-      }
-
-      const pspsOrdenados = Array.from(grupos.keys()).sort((x, y) => x.localeCompare(y));
-      const linhas = [];
-      linhas.push(`📌 Resumo de pendências (total: ${pendentes.length})`);
-      linhas.push(`Gerado em: ${new Date().toLocaleString()}`);
-      linhas.push("");
-
-      for (const psp of pspsOrdenados){
-        const itens = grupos.get(psp);
-        linhas.push(`👤 ${psp}: ${itens.length} pendência(s)`);
-        itens.slice(0, 10).forEach((a, idx) => {
-          linhas.push(`  ${idx + 1}. ${a.aluno || "-"} • ${a.tipo || "-"} • AE: ${a.ae || "-"} • Escola: ${a.escola || "-"}`);
-        });
-        if (itens.length > 10) linhas.push(`  … +${itens.length - 10} item(ns)`);
-        linhas.push("");
-      }
-
-      const texto = linhas.join("\n");
-      try {
-        await navigator.clipboard.writeText(texto);
-        toast("Resumo copiado para a área de transferência ✓", "ok");
-      } catch(e){
-        prompt("Copie manualmente:", texto);
-      }
-    });
-
-    /* ---------- Limpar tudo ---------- */
-    document.getElementById("btn-limpar").addEventListener("click", async () => {
-      if (!confirm("Deseja apagar todos os atendimentos do servidor?\n\nEsta ação não pode ser desfeita.")) return;
-      atendimentosAll = [];
-      listarAtendimentos();
-      const salvo = await salvarNoServidor();
-      if (salvo) toast("Dados apagados do servidor com sucesso ✓", "ok");
-    });
-
-    /* ---------- Filtro ---------- */
-    document.getElementById("filtro-tabela").addEventListener("input", () => listarAtendimentos(true));
-    document.getElementById("btn-limpar-filtro").addEventListener("click", () => {
-      const el = document.getElementById("filtro-tabela");
-      el.value = ""; el.focus(); listarAtendimentos();
-    });
-
-    /* ---------- Modal ---------- */
-    let modalIdAtual = null;
-
-    // ── CAMPOS_EDITAVEIS — psp agora usa select-psp ──────────────────────────
-    const CAMPOS_EDITAVEIS = [
-      ["Registrado por", "registradoPor", "text",        false],
-      ["Data/Hora",      "dataHora",      "text",        false],
-      ["Atendimento",    "atendimento",   "text",        false],
-      ["Telefone",       "telefone",      "text",        false],
-      ["Vínculo",        "vinculo",       "text",        false],
-      ["Aluno",          "aluno",         "text",        false],
-      ["Idade",          "idade",         "number",      false],
-      ["AE",             "ae",            "select-ae",   false],
-      ["Escola",         "escola",        "select-escola", true],
-      ["Turno",          "turno",         "select-turno",false],
-      ["PSP Resp.",      "psp",           "select-psp",  false],
-      ["Tipo",           "tipo",          "select-tipo", false],
-      ["Status",         "status",        "select",      false],
-      ["Solicitação",    "solicitacao",   "textarea",    true ],
+    // Larguras exatas da planilha original
+    ws.columns = [
+      { key: 'num',               width: 8.57  },
+      { key: 'unidade_escolar',   width: 41.57 },
+      { key: 'cpf',               width: 19.43 },
+      { key: 'aluno',             width: 25.86 },
+      { key: 'data_nascimento',   width: 17.71 },
+      { key: 'ordem_judicial',    width: 11.43 },
+      { key: 'ano_escolaridade',  width: 9.86  },
+      { key: 'turno',             width: 10.43 },
+      { key: 'ano_laudo',         width: 9.86  },
+      { key: 'tipo_deficiencia',  width: 41.57 },
+      { key: 'caso_severo',       width: 8.43  },
+      { key: 'mediador',          width: 22.0  },
+      { key: 'cuidador',          width: 16.57 },
+      { key: 'sala_recursos',     width: 9.0   },
+      { key: 'acompanhamento_inst', width: 8.29 },
+      { key: 'necessita',         width: 41.57 },
+      { key: 'situacao',          width: 12.0  },
     ];
 
-    function renderModalBody(a, modoEdicao){
-      const body = document.getElementById("modal-body");
-      body.innerHTML = "";
+    const exportHeaders = ['num','unidade_escolar','cpf','aluno','data_nascimento',
+      'ordem_judicial','ano_escolaridade','turno','ano_laudo','tipo_deficiencia',
+      'caso_severo','mediador','cuidador','sala_recursos','acompanhamento_inst',
+      'necessita','situacao'];
 
-      CAMPOS_EDITAVEIS.forEach(([label, key, tipo, full]) => {
-        const div = document.createElement("div");
-        div.className = "modal-field" + (full ? " full" : "");
+    // Estilo do cabeçalho padrão (fundo azul claro DBE5F1)
+    const styleLight = {
+      font: { bold: true, size: 12, color: { argb: 'FF000000' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDBE5F1' } },
+      alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
+      border: { bottom: { style: 'thin', color: { argb: 'FF000000' } } }
+    };
 
-        if (!modoEdicao){
-          div.innerHTML = `<label>${label}</label><span>${a[key] ?? "—"}</span>`;
-        } else {
-          let input;
-          const css = "width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);font-size:13px;";
+    // Estilo azul escuro (colunas B, C, Q)
+    const styleDark = {
+      font: { bold: true, size: 10, color: { argb: 'FFFFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E6EA6' } },
+      alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
+      border: { top: { style: 'thin', color: { argb: 'FF000000' } } }
+    };
 
-          if (tipo === "textarea"){
-            input = document.createElement("textarea");
-            input.rows = 3;
-            input.style.cssText = css + "resize:vertical;font-family:inherit;";
-            input.value = a[key] ?? "";
+    // Cabeçalhos com nome original da planilha
+    const headerLabels = ['num','unidade_escolar','cpf','aluno','data_nascimento',
+      'ordem_judicial','ano_escolaridade','turno','ano_laudo','tipo_deficiencia',
+      'caso_severo','mediador','cuidador','sala_recursos','acompanhamento_inst',
+      'necessita','situacao'];
 
-          } else if (tipo === "select"){
-            input = document.createElement("select");
-            input.style.cssText = css;
-            STATUS_CICLO.forEach(s => {
-              const opt = document.createElement("option");
-              opt.value = s; opt.textContent = s;
-              if (s === a[key]) opt.selected = true;
-              input.appendChild(opt);
-            });
+    const darkCols = new Set([1, 2, 17]); // B=2(idx1), C=3(idx2), Q=17(idx16) → 1-based
 
-          } else if (tipo === "select-turno"){
-            input = document.createElement("select");
-            input.style.cssText = css;
-            ["", ...LISTA_TURNOS].forEach(s => {
-              const opt = document.createElement("option");
-              opt.value = s; opt.textContent = s || "—";
-              if (s === (a[key] ?? "")) opt.selected = true;
-              input.appendChild(opt);
-            });
+    const headerRow = ws.addRow(headerLabels);
+    headerRow.height = 48;
+    headerRow.eachCell((cell, colNum) => {
+      Object.assign(cell, darkCols.has(colNum) ? styleDark : styleLight);
+    });
 
-          } else if (tipo === "select-ae"){
-            input = document.createElement("select");
-            input.style.cssText = css;
-            ["", ...LISTA_AE].forEach(s => {
-              const opt = document.createElement("option");
-              opt.value = s; opt.textContent = s || "— selecione —";
-              if (s === (a[key] ?? "")) opt.selected = true;
-              input.appendChild(opt);
-            });
+    // Filtro automático e congelar linha 1
+    ws.autoFilter = { from: 'A1', to: 'Q1' };
+    ws.views = [{ state: 'frozen', ySplit: 1 }];
 
-          } else if (tipo === "select-escola"){
-            input = document.createElement("select");
-            input.style.cssText = css;
-            ["", ...LISTA_ESCOLAS].forEach(s => {
-              const opt = document.createElement("option");
-              opt.value = s; opt.textContent = s || "— selecione —";
-              if (s === (a[key] ?? "")) opt.selected = true;
-              input.appendChild(opt);
-            });
+    // Validações de dados (listas suspensas) — idênticas à planilha original
+    const validations = [
+      { sqref: 'B2:B500', formula: 'Listas!$A$2:$A$50' },   // unidade_escolar
+      { sqref: 'F2:F500', formula: 'Listas!$B$2:$B$10' },   // ordem_judicial
+      { sqref: 'G2:G500', formula: 'Listas!$C$2:$C$30' },   // ano_escolaridade
+      { sqref: 'H2:H500', formula: 'Listas!$D$2:$D$10' },   // turno
+      { sqref: 'I2:I500', formula: 'Listas!$E$2:$E$20' },   // ano_laudo
+      { sqref: 'J2:J500', formula: 'Listas!$F$2:$F$30' },   // tipo_deficiencia
+      { sqref: 'K2:K500', formula: 'Listas!$G$2:$G$10' },   // caso_severo
+      { sqref: 'L2:L500', formula: 'Listas!$H$2:$H$20' },   // mediador
+      { sqref: 'M2:M500', formula: 'Listas!$H$2:$H$20' },   // cuidador
+      { sqref: 'N2:O500', formula: 'Listas!$I$2:$I$10' },   // sala_recursos / acomp_inst
+      { sqref: 'P2:P500', formula: 'Listas!$J$2:$J$20' },   // necessita
+      { sqref: 'Q2:Q500', formula: 'Listas!$K$2:$K$10' },   // situacao
+    ];
+    validations.forEach(({ sqref, formula }) => {
+      ws.dataValidations.add(sqref, {
+        type: 'list',
+        allowBlank: true,
+        formulae: [formula],
+        showDropDown: false,
+        showErrorMessage: false,
+      });
+    });
+    // Validação de data para data_nascimento
+    ws.dataValidations.add('E2:E500', {
+      type: 'date',
+      operator: 'greaterThan',
+      allowBlank: true,
+      formulae: [new Date(2000, 0, 1)],
+      showErrorMessage: false,
+    });
 
-          } else if (tipo === "select-psp"){
-            input = document.createElement("select");
-            input.style.cssText = css;
-            ["", ...LISTA_PSPS].forEach(s => {
-              const opt = document.createElement("option");
-              opt.value = s; opt.textContent = s || "— selecione —";
-              if (s === (a[key] ?? "")) opt.selected = true;
-              input.appendChild(opt);
-            });
+    // Linhas de dados
+    const internalKeys = ['num','unidade_escolar','cpf','aluno','data_nascimento',
+      'ordem_judicial','ano_escolaridade','turno','ano_laudo','tipo_deficiencia',
+      'caso_severo','mediador','cuidador','sala_recursos','acompanhamento_inst',
+      'necessita','investigacao'];
 
-          } else if (tipo === "select-tipo"){
-           input = document.createElement("select");
-           input.style.cssText = css;
-           ["", "Pedido de Mediador", "Pedido de Cuidador", "Outros"].forEach(s => {
-           const opt = document.createElement("option");
-           opt.value = s; opt.textContent = s || "— selecione —";
-           if (s === (a[key] ?? "")) opt.selected = true;
-           input.appendChild(opt);
-          });
-
-          } else {
-            input = document.createElement("input");
-            input.type = tipo;
-            input.style.cssText = css;
-            input.value = a[key] ?? "";
-          }
-
-          input.dataset.key = key;
-          input.className = "modal-edit-input";
-          div.innerHTML = `<label>${label}</label>`;
-          div.appendChild(input);
+    records.forEach(r => {
+      const rowData = internalKeys.map(k => {
+        const v = r[k] || '';
+        // Converte data para objeto Date para o Excel formatar corretamente
+        if (k === 'data_nascimento' && v) {
+          const d = new Date(v);
+          return isNaN(d) ? v : d;
         }
-        body.appendChild(div);
+        // Ano laudo e num como número
+        if (k === 'ano_laudo' || k === 'num') {
+          const n = parseInt(v);
+          return isNaN(n) ? v : n;
+        }
+        return v;
       });
+      const dataRow = ws.addRow(rowData);
+      dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'center' };
+      // Formata célula de data
+      dataRow.getCell(5).numFmt = 'dd/mm/yyyy';
+    });
+
+    // ── Sheet 2: Listas ─────────────────────────────────────
+    const ws2 = wb.addWorksheet('Listas');
+    const listas = {
+      Escolas: ['EMEF Anísio Teixeira','EMEF Dom Pedro II','EMEF Machado de Assis','EMEF Cecília Meireles','EMEF Rui Barbosa','EMEF Monteiro Lobato','EMEF Clarice Lispector','EMEF Carlos Drummond','EMEF Castro Alves','EMEF Vinícius de Moraes'],
+      OrdemJudicial: ['Sim','Não'],
+      AnoEscolaridade: ['Berçário','G1','G2','G3','Pré I','Pré II','1º ano','2º ano','3º ano','4º ano','5º ano','6º ano','7º ano','8º ano','9º ano'],
+      Turno: ['Manhã','Tarde','Integral'],
+      AnoLaudo: [2019,2020,2021,2022,2023,2024,2025,2026],
+      TipoDeficiencia: ['Autismo - F84.0','TDAH - F90.0','Deficiência Física - Z73','Deficiência Visual - H54','Deficiência Auditiva - H90','Deficiência Intelectual - F79','Transtorno Opositor - F91.3','Paralisia Cerebral - G80','Síndrome de Down - Q90'],
+      CasoSevero: ['Sim','Não'],
+      NomesApoio: ['Maria Clara Nunes','Tereza Lima','Rosângela Ferreira','Carlos Henrique Souza','Patrícia Oliveira','Juliana Alves','Fernanda Costa','André Martins'],
+      SimNao: ['Sim','Não'],
+      Necessita: ['Mediação escolar','Apoio psicopedagógico','Intérprete de Libras','Cuidador','Sala de Recursos','Acompanhamento terapêutico'],
+      Investigacao: ['Com laudo','Estudo']
+    };
+    const listKeys = Object.keys(listas);
+    ws2.addRow(listKeys);
+    ws2.columns = listKeys.map(() => ({ width: 24 }));
+    const maxLen = Math.max(...Object.values(listas).map(a => a.length));
+    for (let i = 0; i < maxLen; i++) {
+      ws2.addRow(listKeys.map(h => listas[h][i] !== undefined ? listas[h][i] : ''));
     }
 
-    function abrirModal(id){
-      const a = atendimentosAll.find(x => x.id === id);
-      if (!a) return;
-      modalIdAtual = id;
-      document.getElementById("modal-id-label").textContent = a.id;
-      renderModalBody(a, false);
-
-      const btnEditar         = document.getElementById("modal-editar");
-      const btnSalvarEdicao   = document.getElementById("modal-salvar-edicao");
-      const btnCancelarEdicao = document.getElementById("modal-cancelar-edicao");
-      const btnStatus         = document.getElementById("modal-alterar-status");
-      const btnRemover        = document.getElementById("modal-remover");
-
-      btnEditar.style.display  = isAdmin() ? "" : "none";
-      btnRemover.style.display = isAdmin() ? "" : "none";
-      btnSalvarEdicao.style.display   = "none";
-      btnCancelarEdicao.style.display = "none";
-      btnStatus.style.display = "";
-
-      document.getElementById("modal-overlay").classList.add("open");
-    }
-
-    function fecharModal(){
-      document.getElementById("modal-overlay").classList.remove("open");
-      modalIdAtual = null;
-    }
-
-    document.getElementById("modal-fechar").addEventListener("click", fecharModal);
-    document.getElementById("modal-fechar-btn").addEventListener("click", fecharModal);
-    document.getElementById("modal-overlay").addEventListener("click", e => {
-      if (e.target === document.getElementById("modal-overlay")) fecharModal();
-    });
-    document.addEventListener("keydown", e => { if (e.key === "Escape") fecharModal(); });
-
-    document.getElementById("modal-alterar-status").addEventListener("click", () => {
-      if (modalIdAtual) { editarStatus(modalIdAtual); fecharModal(); }
-    });
-    document.getElementById("modal-remover").addEventListener("click", () => {
-      if (modalIdAtual) { removerAtendimento(modalIdAtual); fecharModal(); }
-    });
-    document.getElementById("modal-editar").addEventListener("click", () => {
-      const a = atendimentosAll.find(x => x.id === modalIdAtual);
-      if (!a) return;
-      renderModalBody(a, true);
-      document.getElementById("modal-editar").style.display         = "none";
-      document.getElementById("modal-alterar-status").style.display = "none";
-      document.getElementById("modal-salvar-edicao").style.display  = "";
-      document.getElementById("modal-cancelar-edicao").style.display = "";
-    });
-    document.getElementById("modal-cancelar-edicao").addEventListener("click", () => {
-      abrirModal(modalIdAtual);
-    });
-    document.getElementById("modal-salvar-edicao").addEventListener("click", () => {
-      const i = atendimentosAll.findIndex(x => x.id === modalIdAtual);
-      if (i === -1) return;
-      document.querySelectorAll(".modal-edit-input").forEach(input => {
-        atendimentosAll[i][input.dataset.key] = input.value;
-      });
-      listarAtendimentos();
-      toast("Atendimento atualizado.", "ok");
-      autoSave();
-      abrirModal(modalIdAtual);
-    });
-
-    /* ---------- Logout ---------- */
-    document.getElementById("btn-logout").addEventListener("click", () => {
-      try {
-        sessionStorage.removeItem("protocolo_unlock");
-        sessionStorage.removeItem("protocolo_usuario");
-        sessionStorage.removeItem("protocolo_role");
-      } catch(e){}
-      document.getElementById("app").style.display  = "none";
-      document.getElementById("lock").style.display = "grid";
-      const nomeInput = document.getElementById("lock-nome");
-      const passInput = document.getElementById("lock-pass");
-      if (nomeInput){ nomeInput.value = ""; nomeInput.focus(); }
-      if (passInput)  passInput.value = "";
-      const label = document.getElementById("usuario-label");
-      if (label) label.textContent = "";
-      document.getElementById("btn-logout").style.display = "none";
-      const btnLimpar = document.getElementById("btn-limpar");
-      if (btnLimpar) btnLimpar.style.display = "none";
-    });
-
-    document.getElementById("btn-atualizar").addEventListener("click", () => { carregarDoServidor(false); });
-
-    /* ---------- auto-refresh seguro ---------- */
-    function podeAutoRefresh(){
-      if (document.getElementById("modal-overlay").classList.contains("open")) return false;
-      const campos = ["atendimento","telefone","aluno","ae","escola","turno","psp","solicitacao"];
-      if (campos.some(id => { const el = document.getElementById(id); return el && (el.value || "").trim() !== ""; })) return false;
-      if (autoSaveTimer !== null) return false;
-      return true;
-    }
-
-    /* ---------- paginação ---------- */
-    document.getElementById("btn-pag-anterior").addEventListener("click", () => {
-      if (paginaAtual > 1){ paginaAtual--; listarAtendimentos(); window.scrollTo({top: 0, behavior: "smooth"}); }
-    });
-    document.getElementById("btn-pag-proximo").addEventListener("click", () => {
-      paginaAtual++; listarAtendimentos(); window.scrollTo({top: 0, behavior: "smooth"});
-    });
-    document.getElementById("registros-por-pagina").addEventListener("change", () => listarAtendimentos(true));
-
-    /* ---------- Máscara de telefone ---------- */
-    document.getElementById("telefone").addEventListener("input", function (e) {
-      let v = e.target.value.replace(/\D/g, "").slice(0, 11);
-      if (v.length > 7)
-        v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
-      else if (v.length > 2)
-        v = `(${v.slice(0,2)}) ${v.slice(2)}`;
-      else if (v.length > 0)
-        v = `(${v}`;
-      e.target.value = v;
-    });
-
-    /* ---------- init ---------- */
-    window.addEventListener("load", () => {
-      carregarDoServidor(false);
-      setInterval(() => { if (podeAutoRefresh()) carregarDoServidor(true); }, 2 * 60 * 1000);
-    });
-  </script>
-
+    // ── Download ────────────────────────────────────────────
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SIEE_${new Date().toISOString().slice(0,10)}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('⬇ Arquivo Excel exportado!');
+  }
+</script>
 </body>
 </html>
-
-
